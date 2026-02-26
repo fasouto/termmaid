@@ -3,7 +3,7 @@
 ## Development setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/termmaid.git
+git clone https://github.com/fasouto/termmaid.git
 cd termmaid
 uv sync --all-extras
 ```

@@ -24,9 +24,7 @@ I needed Mermaid rendering for a Python project and couldn't find a library that
 without a browser, Node.js, or external services. The existing tools in this space are
 great, specially [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii) (Go) and
 [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) (TypeScript), but
-neither offered a native Python library I could import and call directly. So I built
-termmaid: a pure Python implementation with no runtime dependecies that works anywhere
-Python runs.
+neither offered a native Python library I could import and call directly.
 
 ## Install
 
@@ -138,6 +136,15 @@ stateDiagram-v2
 pip install termmaid[rich]      # Colored terminal output
 pip install termmaid[textual]   # Textual TUI widget
 ```
+
+## Limitations
+
+I tried to make it work with the majority of graphs but it's a lot of work, here are the biggest limitations of this project:
+
+ - **Node positioning can be improved vastly.** The layout engine uses a fixed-stride grid where each node occupies a 3x3 block with 1-cell gaps (stride of 4). Nodes are placed layer-by-layer using a barycenter heuristic (3 passes) to reduce edge crossings, but this is an approximation of an NP-hard problem, so graphs with many cross-layer edges will still produce crossings. Collision resolution is naive: when a cell is occupied, the node shifts perpendicular by one full stride until it finds free space, with no attempt to pack nodes more densely or minimize wasted canvas area.
+ - **Edge routing is Manhattan-only.** Edges are routed via A* pathfinding on a character grid, restricted to 4-directional movement (no diagonals). Previously routed edges are treated as soft obstacles (+2 cost) rather than hard walls, so later edges can overlap earlier ones in dense areas. The search is capped at 5,000 iterations, so very large or heavily constrained graphs may fail to find a path and fall back to a straight line.
+ - **Sequence diagrams don't work.** Only flowcharts and state diagrams are supported.
+ - **Sometimes labels after decisions are not well positioned.** Edge labels are placed by expanding gap cells between nodes on a first-come-first-served basis. When multiple labeled edges share the same gap, later labels may not get enough space.
 
 ## Acknowledgements
 
