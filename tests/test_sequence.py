@@ -213,6 +213,24 @@ class TestSequenceParser:
         notes = [e for e in d.events if isinstance(e, Note)]
         assert notes[0].participants == ["A", "B"]
 
+    def test_note_br_tag_splits(self):
+        d = parse_sequence_diagram(
+            "sequenceDiagram\n"
+            "  A->>B: msg\n"
+            "  Note right of A: line1<br/>line2"
+        )
+        notes = [e for e in d.events if isinstance(e, Note)]
+        assert notes[0].text == "line1\nline2"
+
+    def test_note_br_case_insensitive(self):
+        d = parse_sequence_diagram(
+            "sequenceDiagram\n"
+            "  A->>B: msg\n"
+            "  Note right of A: a<BR>b<br >c"
+        )
+        notes = [e for e in d.events if isinstance(e, Note)]
+        assert notes[0].text == "a\nb\nc"
+
     def test_create_participant(self):
         d = parse_sequence_diagram(
             "sequenceDiagram\n"
@@ -503,3 +521,34 @@ class TestSequenceBlockRendering:
         assert "[alt]" in output
         assert "ping" in output
         assert "ok" in output
+
+    def test_alt_else_no_label_overlap(self):
+        """Message label after else should not overlap with section label."""
+        output = render(
+            "sequenceDiagram\n"
+            "  Alice->>Bob: Request\n"
+            "  alt success\n"
+            "    Bob-->>Alice: OK\n"
+            "  else failure\n"
+            "    Bob-->>Alice: Error\n"
+            "  end"
+        )
+        assert "[failure]" in output
+        assert "Error" in output
+        # The labels should be on separate rows (no garbled overlap)
+        for line in output.split("\n"):
+            if "[failure]" in line:
+                assert "Error" not in line, "Section label and message label overlap"
+
+    def test_multiline_note_rendered(self):
+        """Multi-line note should render as a taller box with all lines."""
+        output = render(
+            "sequenceDiagram\n"
+            "  A->>B: msg\n"
+            "  Note right of A: Line 1<br/>Line 2<br/>Line 3"
+        )
+        assert "Line 1" in output
+        assert "Line 2" in output
+        assert "Line 3" in output
+        # <br/> should not appear literally
+        assert "<br/>" not in output

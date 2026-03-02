@@ -388,7 +388,13 @@ def _draw_label(
 ) -> None:
     """Draw centered label text inside a shape."""
     label_style = "label" if style else ""
-    lines = label.split("\\n") if "\\n" in label else [label]
+    # Split on real newlines (from notes) or literal \n (from flowchart wrapping)
+    if "\n" in label:
+        lines = label.split("\n")
+    elif "\\n" in label:
+        lines = label.split("\\n")
+    else:
+        lines = [label]
     start_row = y + (height - len(lines)) // 2
     for i, line in enumerate(lines):
         row = start_row + i

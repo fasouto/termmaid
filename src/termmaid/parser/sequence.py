@@ -166,8 +166,9 @@ def parse_sequence_diagram(text: str) -> SequenceDiagram:
             _ensure_participant(diagram, p1)
             if p2:
                 _ensure_participant(diagram, p2)
+            note_text = re.sub(r'<br\s*/?>', '\n', note_text.strip(), flags=re.IGNORECASE)
             event_stack[-1].append(Note(
-                text=note_text.strip(),
+                text=note_text,
                 position=position,
                 participants=participants,
             ))

@@ -18,9 +18,9 @@ _ACTOR_HEIGHT = 5     # actor stick-figure height (head, body, legs, gap, label)
 _MIN_GAP = 16         # minimum gap between participant centers
 _EVENT_ROW_H = 2      # rows per message event
 _NOTE_ROW_H = 4       # rows per note event (3-row box + 1 gap)
-_BLOCK_START_H = 2    # rows for block start (label + border)
-_BLOCK_SECTION_H = 1  # rows for section break (dashed line)
-_BLOCK_END_H = 1      # rows for block end (bottom border)
+_BLOCK_START_H = 3    # rows for block start (border + label + gap)
+_BLOCK_SECTION_H = 2  # rows for section break (dashed line + gap)
+_BLOCK_END_H = 2      # rows for block end (bottom border + gap)
 _TOP_MARGIN = 0
 _BOTTOM_MARGIN = 1
 
@@ -76,6 +76,11 @@ def _flatten_events(events: list, depth: int = 0) -> list:
     return result
 
 
+def _note_lines(note: Note) -> list[str]:
+    """Split note text into lines."""
+    return note.text.split("\n") if "\n" in note.text else [note.text]
+
+
 def _participant_index(diagram: SequenceDiagram, pid: str) -> int:
     for i, p in enumerate(diagram.participants):
         if p.id == pid:
@@ -120,7 +125,9 @@ def _compute_layout(
             event_heights.append(0)
             effective_labels.append("")
         elif isinstance(ev, Note):
-            event_heights.append(_NOTE_ROW_H)
+            lines = _note_lines(ev)
+            note_h = len(lines) + 2 + 1  # border top + content lines + border bottom + gap
+            event_heights.append(note_h)
             effective_labels.append("")
         elif isinstance(ev, _BlockStart):
             event_heights.append(_BLOCK_START_H)
@@ -145,7 +152,8 @@ def _compute_layout(
     for ev_idx, ev in enumerate(flat_events):
         if isinstance(ev, Note):
             # Notes may need gap expansion
-            note_width = len(ev.text) + 4
+            lines = _note_lines(ev)
+            note_width = max(len(line) for line in lines) + 4
             for pid in ev.participants:
                 pi = _participant_index(diagram, pid)
                 if pi < 0:
@@ -201,7 +209,8 @@ def _compute_layout(
             for pid in ev.participants:
                 pi = _participant_index(diagram, pid)
                 if pi >= 0 and ev.position == "rightof":
-                    note_width = len(ev.text) + 4
+                    lines = _note_lines(ev)
+                    note_width = max(len(line) for line in lines) + 4
                     needed = col_centers[pi] + 2 + note_width + 1
                     max_right = max(max_right, needed)
 
@@ -506,6 +515,21 @@ def render_sequence(diagram: SequenceDiagram, *, use_ascii: bool = False) -> Can
             else:
                 canvas.put(r, cx, lifeline_char, merge=False, style="edge")
 
+    # ── 2.5 Draw continuous block side borders ─────────────────────
+    block_border_stack: list[tuple[int, int, int]] = []  # (left, right, start_row)
+    for idx, ev in enumerate(flat_events):
+        row = row_offsets[idx]
+        if isinstance(ev, _BlockStart):
+            left, right = _block_frame_bounds(col_centers, ev.depth)
+            block_border_stack.append((left, right, row))
+        elif isinstance(ev, _BlockEnd):
+            if block_border_stack:
+                left, right, start_row = block_border_stack.pop()
+                for r in range(start_row + 1, row):
+                    canvas.put(r, left, cs.vertical, merge=False, style="node")
+                    if right < canvas.width:
+                        canvas.put(r, right, cs.vertical, merge=False, style="node")
+
     # ── 3. Draw events (messages, notes, blocks) ──────────────────
     msg_counter = 0
     for idx, ev in enumerate(flat_events):
@@ -578,11 +602,13 @@ def _draw_block_start(
     if right < canvas.width:
         canvas.put(row, right, cs.top_right, merge=False, style=style)
 
-    # Label row: [kind] label
+    # Label row: [kind] label — clear interior first to hide lifeline chars
     label = f"[{ev.block.kind}] {ev.block.label}" if ev.block.label else f"[{ev.block.kind}]"
     label_col = left + 1
     if row + 1 < canvas.height:
         canvas.put(row + 1, left, cs.vertical, merge=False, style=style)
+        for c in range(left + 1, min(right, canvas.width)):
+            canvas._grid[row + 1][c] = " "
         if right < canvas.width:
             canvas.put(row + 1, right, cs.vertical, merge=False, style=style)
         canvas.put_text(row + 1, label_col, label, style="edge_label")
@@ -644,8 +670,9 @@ def _draw_note(
     use_ascii: bool,
 ) -> None:
     """Draw a note box at the given row."""
-    note_width = len(note.text) + 4
-    note_height = 3
+    lines = _note_lines(note)
+    note_width = max(len(line) for line in lines) + 4
+    note_height = len(lines) + 2
 
     # Determine horizontal placement
     if note.position == "rightof":
