@@ -278,6 +278,28 @@ def _assign_layers(graph: Graph) -> dict[str, int]:
     return layers
 
 
+def _count_crossings(graph: Graph, layer_lists: list[list[str]]) -> int:
+    """Count the total number of edge crossings between adjacent layers."""
+    total = 0
+    for layer_idx in range(1, len(layer_lists)):
+        prev_pos = {nid: i for i, nid in enumerate(layer_lists[layer_idx - 1])}
+        cur_pos = {nid: i for i, nid in enumerate(layer_lists[layer_idx])}
+        # Collect edges between these two layers
+        edges_between: list[tuple[int, int]] = []
+        for edge in graph.edges:
+            if edge.source in prev_pos and edge.target in cur_pos:
+                edges_between.append((prev_pos[edge.source], cur_pos[edge.target]))
+        # Count crossings: two edges (u1,v1) and (u2,v2) cross iff
+        # (u1 < u2 and v1 > v2) or (u1 > u2 and v1 < v2)
+        for i in range(len(edges_between)):
+            for j in range(i + 1, len(edges_between)):
+                u1, v1 = edges_between[i]
+                u2, v2 = edges_between[j]
+                if (u1 - u2) * (v1 - v2) < 0:
+                    total += 1
+    return total
+
+
 def _order_layers(graph: Graph, layers: dict[str, int]) -> list[list[str]]:
     """Order nodes within each layer using barycenter heuristic."""
     # Group nodes by layer
@@ -286,8 +308,12 @@ def _order_layers(graph: Graph, layers: dict[str, int]) -> list[list[str]]:
     for nid in graph.node_order:
         layer_lists[layers.get(nid, 0)].append(nid)
 
-    # Barycenter ordering: position each node at the average position of its neighbors
-    for _pass in range(3):  # A few passes usually suffice
+    # Barycenter ordering with improvement tracking
+    best_crossings = _count_crossings(graph, layer_lists)
+    best_ordering = [layer[:] for layer in layer_lists]
+    no_improvement = 0
+
+    for _pass in range(8):  # Max 8 passes
         for layer_idx in range(1, len(layer_lists)):
             prev_positions = {nid: i for i, nid in enumerate(layer_lists[layer_idx - 1])}
             barycenters: dict[str, float] = {}
@@ -303,6 +329,19 @@ def _order_layers(graph: Graph, layers: dict[str, int]) -> list[list[str]]:
                     barycenters[nid] = float(layer_lists[layer_idx].index(nid))
 
             layer_lists[layer_idx].sort(key=lambda n: barycenters.get(n, 0))
+
+        crossings = _count_crossings(graph, layer_lists)
+        if crossings < best_crossings:
+            best_crossings = crossings
+            best_ordering = [layer[:] for layer in layer_lists]
+            no_improvement = 0
+        else:
+            no_improvement += 1
+
+        if no_improvement >= 4 or best_crossings == 0:
+            break
+
+    layer_lists = best_ordering
 
     # Enforce topological order for orthogonal subgraph nodes in the same layer
     ortho_sets = _get_orthogonal_sg_nodes(graph)
@@ -566,11 +605,25 @@ def _expand_gaps_for_edge_labels(graph: Graph, layout: GridLayout) -> None:
             # Also ensure the gap column beside the edge is wide enough
             # for the label text. The edge typically runs in a border col;
             # the label is placed at x+1, which falls in the gap col after.
+            # Determine gap column from both source AND target positions.
             src_col = src_p.grid.col
-            gap_col = src_col + 2  # gap cell to the right of node
-            if gap_col in layout.col_widths:
-                cur = layout.col_widths[gap_col]
-                layout.col_widths[gap_col] = max(cur, label_len + 1)
+            tgt_col = tgt_p.grid.col
+            # The edge runs vertically in a gap column between src and tgt.
+            # Expand all gap columns that might hold the label.
+            gap_cols: set[int] = set()
+            if tgt_col >= src_col:
+                gap_cols.add(src_col + 2)  # gap to the right of source
+            if tgt_col <= src_col:
+                gap_cols.add(src_col - 2)  # gap to the left of source
+            # For edges crossing multiple columns, also expand intermediate gaps
+            c_min = min(src_col, tgt_col)
+            c_max = max(src_col, tgt_col)
+            for c in range(c_min + 2, c_max, STRIDE):
+                gap_cols.add(c)
+            for gap_col in gap_cols:
+                if gap_col >= 0 and gap_col in layout.col_widths:
+                    cur = layout.col_widths[gap_col]
+                    layout.col_widths[gap_col] = max(cur, label_len + 1)
 
     # For vertical flow: when multiple labeled edges leave the same source,
     # ensure the gap row is tall enough for all labels with spacing.

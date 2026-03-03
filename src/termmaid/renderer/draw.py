@@ -281,9 +281,10 @@ def _draw_edges(
                 _draw_box_start(canvas, re.draw_path[-1], re.draw_path[-2], re, layout, cs)
 
     # Pass 2: edge labels (on top of all edge lines)
+    placed_labels: list[tuple[int, int, int]] = []  # (row, col_start, col_end)
     for re in routed:
         if re.label and len(re.draw_path) >= 2:
-            _draw_edge_label(canvas, re)
+            _draw_edge_label(canvas, re, placed_labels)
 
 
 def _edge_line_chars(style: EdgeStyle, cs: CharSet) -> tuple[str, str]:
@@ -422,17 +423,53 @@ def _draw_box_start(
     canvas.put(ey, ex, tee)
 
 
+def _label_overlaps(
+    row: int, col_start: int, col_end: int,
+    placed: list[tuple[int, int, int]],
+) -> bool:
+    """Check if a label placement overlaps any already-placed label."""
+    for pr, ps, pe in placed:
+        if pr == row and col_start < pe and col_end > ps:
+            return True
+    return False
+
+
+def _try_place_label(
+    canvas: Canvas,
+    row: int, col: int, label: str,
+    placed: list[tuple[int, int, int]],
+) -> bool:
+    """Try to place a label at (row, col). Returns True if placed."""
+    col_end = col + len(label)
+    if col < 0 or row < 0:
+        return False
+    if _label_overlaps(row, col, col_end, placed):
+        return False
+    # Ensure canvas is large enough for the label
+    needed_w = col_end + 1
+    needed_h = row + 1
+    if needed_w > canvas.width or needed_h > canvas.height:
+        canvas.resize(max(canvas.width, needed_w), max(canvas.height, needed_h))
+    canvas.put_text(row, col, label, style="edge_label")
+    placed.append((row, col, col_end))
+    return True
+
+
 def _draw_edge_label(
     canvas: Canvas, re: RoutedEdge,
+    placed_labels: list[tuple[int, int, int]],
 ) -> None:
     """Draw an edge label on the best segment of the path.
 
     For horizontal segments: center the label on the edge line (overwrites
     line characters).  For vertical segments: place beside the line.
+    Uses collision detection to avoid overlapping previously placed labels.
     """
     label = re.label
     if not label:
         return
+
+    label_len = len(label)
 
     # First try vertical segments (label placed beside the line)
     for i in range(len(re.draw_path) - 1):
@@ -440,7 +477,22 @@ def _draw_edge_label(
         x2, y2 = re.draw_path[i + 1]
         if x1 == x2 and abs(y2 - y1) >= 2:
             mid_y = (min(y1, y2) + max(y1, y2)) // 2
+            # Try right side first
+            if _try_place_label(canvas, mid_y, x1 + 1, label, placed_labels):
+                return
+            # Try left side
+            if _try_place_label(canvas, mid_y, x1 - label_len - 1, label, placed_labels):
+                return
+            # Try shifted up/down on right side
+            for offset in range(1, 4):
+                if _try_place_label(canvas, mid_y - offset, x1 + 1, label, placed_labels):
+                    return
+                if _try_place_label(canvas, mid_y + offset, x1 + 1, label, placed_labels):
+                    return
+            # Force place right side if all fallbacks failed
+            col_end = x1 + 1 + label_len
             canvas.put_text(mid_y, x1 + 1, label, style="edge_label")
+            placed_labels.append((mid_y, x1 + 1, col_end))
             return
 
     # Try horizontal segments — center label above the line in the gap
@@ -449,17 +501,32 @@ def _draw_edge_label(
         x2, y2 = re.draw_path[i + 1]
         if y1 == y2:
             seg_len = abs(x2 - x1)
-            if seg_len >= len(label) + 2:
+            if seg_len >= label_len + 2:
                 mid = (min(x1, x2) + max(x1, x2)) // 2
-                start = mid - len(label) // 2
+                start = mid - label_len // 2
+                # Try above the line
+                if _try_place_label(canvas, y1 - 1, start, label, placed_labels):
+                    return
+                # Try below the line
+                if _try_place_label(canvas, y1 + 1, start, label, placed_labels):
+                    return
+                # Force place above
+                col_end = start + label_len
                 canvas.put_text(y1 - 1, start, label, style="edge_label")
+                placed_labels.append((y1 - 1, start, col_end))
                 return
 
     # Fallback: place at midpoint of path
     if len(re.draw_path) >= 2:
         mid_idx = len(re.draw_path) // 2
         mx, my = re.draw_path[mid_idx]
+        if _try_place_label(canvas, my - 1, mx + 1, label, placed_labels):
+            return
+        if _try_place_label(canvas, my + 1, mx + 1, label, placed_labels):
+            return
+        # Force place
         canvas.put_text(my - 1, mx + 1, label, style="edge_label")
+        placed_labels.append((my - 1, mx + 1, mx + 1 + label_len))
 
 
 def _draw_notes(canvas: Canvas, graph: Graph, layout: GridLayout, cs: CharSet) -> None:

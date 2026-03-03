@@ -135,6 +135,33 @@ class TestEdgeLabels:
         assert "yes" in output
         assert "no" in output
 
+    def test_label_no_overlap(self):
+        """Regression: parallel labeled edges should not truncate or overlap labels."""
+        output = render(
+            "graph TD\n"
+            "    A -->|label one| C\n"
+            "    B -->|label two| D\n"
+            "    A --> D\n"
+            "    B --> C"
+        )
+        # Both full label texts must be present (allowing for space-to-dash)
+        assert "label" in output
+        # "label two" should not be truncated — check "two" appears
+        assert "two" in output
+        assert "one" in output
+
+    def test_three_labels_from_same_source(self):
+        """Multiple labeled edges from one source should all be visible."""
+        output = render(
+            "graph TD\n"
+            "    A[Start] -->|Yes| B[Process]\n"
+            "    A -->|No| C[Error]\n"
+            "    A -->|Maybe| D[Retry]"
+        )
+        assert "Yes" in output
+        assert "No" in output
+        assert "Maybe" in output
+
 
 class TestSubgraphs:
     def test_basic_subgraph(self):
