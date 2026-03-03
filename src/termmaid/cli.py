@@ -25,7 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--color",
         action="store_true",
-        help="Use colored output (requires 'rich' package)",
+        help="Use colored output (requires 'rich' package). Implied by --theme.",
     )
     parser.add_argument(
         "--padding-x",
@@ -46,9 +46,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--theme",
-        default="default",
+        default=None,
         choices=["default", "terra", "neon", "mono", "amber", "phosphor"],
-        help="Color theme for --color output (default: default)",
+        help="Color theme (implies --color). Requires 'rich' package.",
     )
     parser.add_argument(
         "--version",
@@ -57,6 +57,9 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+
+    use_color = args.color or args.theme is not None
+    theme = args.theme or "default"
 
     # Read input
     if args.file:
@@ -96,20 +99,20 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
     try:
-        if args.color:
+        if use_color:
             result = render_rich(
                 source,
                 use_ascii=args.ascii,
                 padding_x=args.padding_x,
                 padding_y=args.padding_y,
                 rounded_edges=not args.sharp_edges,
-                theme=args.theme,
+                theme=theme,
             )
             try:
                 from rich import print as rprint
                 rprint(result)
             except ImportError:
-                print("Error: 'rich' package required for --color. Install with: pip install termmaid[rich]", file=sys.stderr)
+                print("Error: 'rich' package required for --color/--theme. Install with: pip install termmaid[rich]", file=sys.stderr)
                 return 1
         else:
             result = render(

@@ -38,7 +38,7 @@ pip install termmaid
 ```bash
 termmaid diagram.mmd
 echo "graph LR; A-->B-->C" | termmaid
-termmaid diagram.mmd --color --theme neon
+termmaid diagram.mmd --theme neon
 termmaid diagram.mmd --ascii
 ```
 
@@ -333,8 +333,8 @@ gitGraph
 | Flag | Description |
 |------|-------------|
 | `--ascii` | ASCII-only output (no Unicode box-drawing) |
-| `--color` | Colored output (requires `pip install termmaid[rich]`) |
-| `--theme NAME` | Color theme: `default`, `terra`, `neon`, `mono`, `amber`, `phosphor` |
+| `--color` | Colored output (requires `pip install termmaid[rich]`). Implied by `--theme`. |
+| `--theme NAME` | Color theme (implies `--color`): `default`, `terra`, `neon`, `mono`, `amber`, `phosphor` |
 | `--padding-x N` | Horizontal padding inside boxes (default: 4) |
 | `--padding-y N` | Vertical padding inside boxes (default: 2) |
 | `--sharp-edges` | Sharp corners on edge turns instead of rounded |
