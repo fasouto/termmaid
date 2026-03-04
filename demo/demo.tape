@@ -39,6 +39,6 @@ Sleep 4s
 
 # 4. One-liner hook — pipe-friendly with branching
 Ctrl+L
-Type "echo 'graph LR; A[Request] --> B{Valid?}; B -->|Yes| C[Process]; B -->|No| D[Error]' | termmaid --color"
+Type "echo 'graph LR; A[Request] --> B{Valid?}; B -->|Yes| C[Process]; B -->|No| D[Error]' | termmaid --theme default"
 Enter
 Sleep 4s

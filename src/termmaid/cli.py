@@ -23,11 +23,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Use ASCII characters instead of Unicode box-drawing",
     )
     parser.add_argument(
-        "--color",
-        action="store_true",
-        help="Use colored output (requires 'rich' package). Implied by --theme.",
-    )
-    parser.add_argument(
         "--padding-x",
         type=int,
         default=4,
@@ -48,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         "--theme",
         default=None,
         choices=["default", "terra", "neon", "mono", "amber", "phosphor"],
-        help="Color theme (implies --color). Requires 'rich' package.",
+        help="Color theme. Requires 'rich' package (pip install termmaid[rich]).",
     )
     parser.add_argument(
         "--version",
@@ -58,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
-    use_color = args.color or args.theme is not None
+    use_color = args.theme is not None
     theme = args.theme or "default"
 
     # Read input
@@ -112,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
                 from rich import print as rprint
                 rprint(result)
             except ImportError:
-                print("Error: 'rich' package required for --color/--theme. Install with: pip install termmaid[rich]", file=sys.stderr)
+                print("Error: 'rich' package required for --theme. Install with: pip install termmaid[rich]", file=sys.stderr)
                 return 1
         else:
             result = render(
