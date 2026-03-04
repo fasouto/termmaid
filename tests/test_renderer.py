@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from termmaid import render
+from termaid import render
 from tests.conftest import (
     EXPECTED_DIR,
     FLOWCHARTS_DIR,
@@ -28,7 +28,7 @@ EXPECTED_DIR.mkdir(parents=True, exist_ok=True)
 
 def _get_node_labels(source: str) -> list[str]:
     """Extract expected node labels from mermaid source."""
-    from termmaid import parse
+    from termaid import parse
     graph = parse(source)
     return [n.label for n in graph.nodes.values()]
 

@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "termmaid"
-version = "0.1.0"
+name = "termaid"
+version = "0.1.1"
 description = "Render Mermaid diagram syntax as beautiful Unicode art in the terminal"
 readme = "README.md"
 license = "MIT"
@@ -31,10 +31,10 @@ dev = [
 ]
 
 [project.scripts]
-termmaid = "termmaid.cli:main"
+termaid = "termaid.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/termmaid"]
+packages = ["src/termaid"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

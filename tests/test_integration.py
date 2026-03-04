@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid import render, parse
+from termaid import render, parse
 from tests.conftest import (
     assert_all_nodes_rendered,
     assert_no_edge_node_overlap,

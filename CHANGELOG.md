@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 (2026-03-04)
+
+- Rename package from `termmaid` to `termaid`
+
 ## 0.1.0 (2026-03-04)
 
 Initial release.

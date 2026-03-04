@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from termmaid.cli import main
+from termaid.cli import main
 
 
 class TestCliMain:
@@ -49,7 +49,7 @@ class TestCliMain:
 class TestCliPipe:
     def test_pipe_input(self):
         result = subprocess.run(
-            [sys.executable, "-m", "termmaid"],
+            [sys.executable, "-m", "termaid"],
             input="graph LR\n  A --> B",
             capture_output=True,
             text=True,
@@ -60,7 +60,7 @@ class TestCliPipe:
 
     def test_pipe_ascii(self):
         result = subprocess.run(
-            [sys.executable, "-m", "termmaid", "--ascii"],
+            [sys.executable, "-m", "termaid", "--ascii"],
             input="graph LR\n  A --> B",
             capture_output=True,
             text=True,
@@ -71,7 +71,7 @@ class TestCliPipe:
 
     def test_pipe_chain(self):
         result = subprocess.run(
-            [sys.executable, "-m", "termmaid"],
+            [sys.executable, "-m", "termaid"],
             input="graph LR\n  A --> B --> C --> D",
             capture_output=True,
             text=True,

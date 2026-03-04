@@ -1,9 +1,9 @@
 """Tests for sequence diagram parsing and rendering."""
 from __future__ import annotations
 
-from termmaid import render
-from termmaid.parser.sequence import parse_sequence_diagram
-from termmaid.model.sequence import ActivateEvent, Block, DestroyEvent, Message, Note
+from termaid import render
+from termaid.parser.sequence import parse_sequence_diagram
+from termaid.model.sequence import ActivateEvent, Block, DestroyEvent, Message, Note
 
 
 # ── Parser tests ──────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ class TestSequenceParser:
             "  A->>B: msg\n"
             "  Note right of A: hello"
         )
-        from termmaid.model.sequence import Note
+        from termaid.model.sequence import Note
         notes = [e for e in d.events if isinstance(e, Note)]
         assert len(notes) == 1
         assert notes[0].position == "rightof"
@@ -187,7 +187,7 @@ class TestSequenceParser:
             "  A->>B: msg\n"
             "  Note left of B: bye"
         )
-        from termmaid.model.sequence import Note
+        from termaid.model.sequence import Note
         notes = [e for e in d.events if isinstance(e, Note)]
         assert len(notes) == 1
         assert notes[0].position == "leftof"
@@ -198,7 +198,7 @@ class TestSequenceParser:
             "  A->>B: msg\n"
             "  Note over A: thinking"
         )
-        from termmaid.model.sequence import Note
+        from termaid.model.sequence import Note
         notes = [e for e in d.events if isinstance(e, Note)]
         assert notes[0].position == "over"
         assert notes[0].participants == ["A"]
@@ -209,7 +209,7 @@ class TestSequenceParser:
             "  A->>B: msg\n"
             "  Note over A,B: shared note"
         )
-        from termmaid.model.sequence import Note
+        from termaid.model.sequence import Note
         notes = [e for e in d.events if isinstance(e, Note)]
         assert notes[0].participants == ["A", "B"]
 

@@ -1,8 +1,8 @@
 """Tests for class diagram parsing and rendering."""
 from __future__ import annotations
 
-from termmaid import render
-from termmaid.parser.classdiagram import parse_class_diagram
+from termaid import render
+from termaid.parser.classdiagram import parse_class_diagram
 
 
 # ── Parser tests ──────────────────────────────────────────────────────────────

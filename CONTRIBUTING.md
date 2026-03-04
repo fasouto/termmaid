@@ -1,10 +1,10 @@
-# Contributing to termmaid
+# Contributing to termaid
 
 ## Development setup
 
 ```bash
-git clone https://github.com/fasouto/termmaid.git
-cd termmaid
+git clone https://github.com/fasouto/termaid.git
+cd termaid
 uv sync --all-extras
 ```
 
@@ -23,7 +23,7 @@ uv run pytest tests/ --update-snapshots
 ## Project structure
 
 ```
-src/termmaid/
+src/termaid/
   __init__.py          # Public API: render(), render_rich(), parse()
   cli.py               # CLI entry point (argparse)
   graph/               # Graph data model (Node, Edge, Subgraph, NodeShape)
@@ -51,17 +51,17 @@ Both `render()` and `render_rich()` auto-detect the diagram type from the source
 
 ## Adding a new diagram type
 
-1. Create the model in `src/termmaid/model/yourdiagram.py` (dataclasses)
-2. Create the parser in `src/termmaid/parser/yourdiagram.py`
-3. Create the renderer in `src/termmaid/renderer/yourdiagram.py` (returns a `Canvas`)
-4. Add dispatch in `src/termmaid/__init__.py` (both `render()` and `render_rich()`)
+1. Create the model in `src/termaid/model/yourdiagram.py` (dataclasses)
+2. Create the parser in `src/termaid/parser/yourdiagram.py`
+3. Create the renderer in `src/termaid/renderer/yourdiagram.py` (returns a `Canvas`)
+4. Add dispatch in `src/termaid/__init__.py` (both `render()` and `render_rich()`)
 5. Add tests
 
 ## Adding a new node shape
 
-1. Add the shape to `NodeShape` enum in `src/termmaid/graph/shapes.py`
-2. Add parser detection in `src/termmaid/parser/flowchart.py` (`_parse_node`)
-3. Add renderer in `src/termmaid/renderer/shapes/__init__.py`
+1. Add the shape to `NodeShape` enum in `src/termaid/graph/shapes.py`
+2. Add parser detection in `src/termaid/parser/flowchart.py` (`_parse_node`)
+3. Add renderer in `src/termaid/renderer/shapes/__init__.py`
 4. Register in `SHAPE_RENDERERS` dict
 5. Add tests in `tests/test_shapes.py`
 

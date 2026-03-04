@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid.parser.flowchart import parse_flowchart
-from termmaid.layout.grid import compute_layout
-from termmaid.routing.router import route_edges, RoutedEdge
-from termmaid.routing.pathfinder import find_path, simplify_path, heuristic
+from termaid.parser.flowchart import parse_flowchart
+from termaid.layout.grid import compute_layout
+from termaid.routing.router import route_edges, RoutedEdge
+from termaid.routing.pathfinder import find_path, simplify_path, heuristic
 
 
 class TestHeuristic:

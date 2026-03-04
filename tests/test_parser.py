@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid.parser.flowchart import parse_flowchart
-from termmaid.graph.model import Direction, EdgeStyle
-from termmaid.graph.shapes import NodeShape
+from termaid.parser.flowchart import parse_flowchart
+from termaid.graph.model import Direction, EdgeStyle
+from termaid.graph.shapes import NodeShape
 
 
 class TestParseDirection:

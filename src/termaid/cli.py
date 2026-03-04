@@ -1,4 +1,4 @@
-"""CLI entry point for termmaid."""
+"""CLI entry point for termaid."""
 from __future__ import annotations
 
 import argparse
@@ -9,7 +9,7 @@ import sys
 def main(argv: list[str] | None = None) -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        prog="termmaid",
+        prog="termaid",
         description="Render Mermaid diagrams as Unicode art in the terminal",
     )
     parser.add_argument(
@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         "--theme",
         default=None,
         choices=["default", "terra", "neon", "mono", "amber", "phosphor"],
-        help="Color theme. Requires 'rich' package (pip install termmaid[rich]).",
+        help="Color theme. Requires 'rich' package (pip install termaid[rich]).",
     )
     parser.add_argument(
         "--version",
@@ -71,8 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         source = sys.stdin.read()
     else:
         print("Error: No input provided. Pass a file or pipe input.", file=sys.stderr)
-        print("Usage: termmaid diagram.mmd", file=sys.stderr)
-        print("       echo 'graph LR; A-->B' | termmaid", file=sys.stderr)
+        print("Usage: termaid diagram.mmd", file=sys.stderr)
+        print("       echo 'graph LR; A-->B' | termaid", file=sys.stderr)
         return 1
 
     source = source.strip()
@@ -81,16 +81,16 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        from termmaid import render, render_rich
+        from termaid import render, render_rich
     except ImportError:
-        # Support running directly: python3 src/termmaid/cli.py
-        # __file__ is src/termmaid/cli.py → go up to src/
+        # Support running directly: python3 src/termaid/cli.py
+        # __file__ is src/termaid/cli.py → go up to src/
         _src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         sys.path.insert(0, _src_dir)
         try:
-            from termmaid import render, render_rich
+            from termaid import render, render_rich
         except ImportError:
-            print("Error: termmaid package not found. Install with: pip install -e .", file=sys.stderr)
+            print("Error: termaid package not found. Install with: pip install -e .", file=sys.stderr)
             return 1
 
     try:
@@ -107,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
                 from rich import print as rprint
                 rprint(result)
             except ImportError:
-                print("Error: 'rich' package required for --theme. Install with: pip install termmaid[rich]", file=sys.stderr)
+                print("Error: 'rich' package required for --theme. Install with: pip install termaid[rich]", file=sys.stderr)
                 return 1
         else:
             result = render(

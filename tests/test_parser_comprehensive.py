@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid.parser.flowchart import parse_flowchart
-from termmaid.graph.model import Direction, Edge, EdgeStyle
-from termmaid.graph.shapes import NodeShape
+from termaid.parser.flowchart import parse_flowchart
+from termaid.graph.model import Direction, Edge, EdgeStyle
+from termaid.graph.shapes import NodeShape
 
 
 # ── Bidirectional arrows ──────────────────────────────────────────────────────

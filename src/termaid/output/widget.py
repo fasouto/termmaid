@@ -15,7 +15,7 @@ def _get_widget_class():
     except ImportError:
         raise ImportError(
             "The 'textual' package is required for the MermaidWidget. "
-            "Install it with: pip install termmaid[textual]"
+            "Install it with: pip install termaid[textual]"
         )
 
     class MermaidWidget(Widget):

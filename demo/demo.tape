@@ -23,22 +23,22 @@ Ctrl+L
 Show
 
 # 1. Sequence diagram — API call flow
-Type "termmaid sequence.mmd --theme phosphor"
+Type "termaid sequence.mmd --theme phosphor"
 Enter
 Sleep 4s
 
 # 2. Flowchart — branching decision tree with diamonds and labels
-Type "termmaid flowchart.mmd --theme terra"
+Type "termaid flowchart.mmd --theme terra"
 Enter
 Sleep 4s
 
 # 3. Git graph — branches, merges, commits
-Type "termmaid gitgraph.mmd --theme amber"
+Type "termaid gitgraph.mmd --theme amber"
 Enter
 Sleep 4s
 
 # 4. One-liner hook — pipe-friendly with branching
 Ctrl+L
-Type "echo 'graph LR; A[Request] --> B{Valid?}; B -->|Yes| C[Process]; B -->|No| D[Error]' | termmaid --theme default"
+Type "echo 'graph LR; A[Request] --> B{Valid?}; B -->|Yes| C[Process]; B -->|No| D[Error]' | termaid --theme default"
 Enter
 Sleep 4s

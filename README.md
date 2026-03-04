@@ -1,9 +1,9 @@
-# termmaid
+# termaid
 
 Terminal-native Mermaid rendering for Python.
 
 <p align="center">
-  <img src="demo/termaid-demo.gif" alt="termmaid demo" width="800">
+  <img src="demo/termaid-demo.gif" alt="termaid demo" width="800">
 </p>
 
 Render [Mermaid](https://mermaid.js.org/) diagrams as Unicode art directly in your terminal. Pure Python, zero dependencies.
@@ -15,16 +15,16 @@ Render [Mermaid](https://mermaid.js.org/) diagrams as Unicode art directly in yo
 - **Rich and Textual integration:** colored output and TUI widgets with optional extras
 - **6 color themes:** default, terra, neon, mono, amber, phosphor
 - **ASCII fallback:** works on any terminal, even the most basic ones
-- **Pipe-friendly CLI:** `cat diagram.mmd | termmaid` just works
+- **Pipe-friendly CLI:** `cat diagram.mmd | termaid` just works
 
 ## Why?
 
-Mermaid is great for documentation, but rendering it usually means spinning up a browser or calling an external service. termmaid lets you render diagrams over SSH, in CI logs, inside TUI apps, or anywhere you have a Python environment. It was built because the existing tools in this space, like [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii) (Go) and [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) (TypeScript), don't offer a native Python library you can import and call directly.
+Mermaid is great for documentation, but rendering it usually means spinning up a browser or calling an external service. termaid lets you render diagrams over SSH, in CI logs, inside TUI apps, or anywhere you have a Python environment. It was built because the existing tools in this space, like [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii) (Go) and [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) (TypeScript), don't offer a native Python library you can import and call directly.
 
 ## Install
 
 ```bash
-pip install termmaid
+pip install termaid
 ```
 
 ## Quick start
@@ -32,31 +32,31 @@ pip install termmaid
 ### CLI
 
 ```bash
-termmaid diagram.mmd
-echo "graph LR; A-->B-->C" | termmaid
-termmaid diagram.mmd --theme neon
-termmaid diagram.mmd --ascii
+termaid diagram.mmd
+echo "graph LR; A-->B-->C" | termaid
+termaid diagram.mmd --theme neon
+termaid diagram.mmd --ascii
 ```
 
 ### Python
 
 ```python
-from termmaid import render
+from termaid import render
 
 print(render("graph LR\n  A --> B --> C"))
 ```
 
 ```python
-# Colored output (requires: pip install termmaid[rich])
-from termmaid import render_rich
+# Colored output (requires: pip install termaid[rich])
+from termaid import render_rich
 from rich import print as rprint
 
 rprint(render_rich("graph LR\n  A --> B", theme="terra"))
 ```
 
 ```python
-# Textual TUI widget (requires: pip install termmaid[textual])
-from termmaid import MermaidWidget
+# Textual TUI widget (requires: pip install termaid[textual])
+from termaid import MermaidWidget
 
 widget = MermaidWidget("graph LR\n  A --> B")
 ```
@@ -329,7 +329,7 @@ gitGraph
 | Flag | Description |
 |------|-------------|
 | `--ascii` | ASCII-only output (no Unicode box-drawing) |
-| `--theme NAME` | Color theme: `default`, `terra`, `neon`, `mono`, `amber`, `phosphor` (requires `pip install termmaid[rich]`) |
+| `--theme NAME` | Color theme: `default`, `terra`, `neon`, `mono`, `amber`, `phosphor` (requires `pip install termaid[rich]`) |
 | `--padding-x N` | Horizontal padding inside boxes (default: 4) |
 | `--padding-y N` | Vertical padding inside boxes (default: 2) |
 | `--sharp-edges` | Sharp corners on edge turns instead of rounded |
@@ -342,14 +342,14 @@ Render a Mermaid diagram as a plain text string. Auto-detects diagram type.
 
 ### `render_rich(source, ..., theme="default") -> rich.text.Text`
 
-Render as a [Rich](https://rich.readthedocs.io/) `Text` object with colors. Requires `pip install termmaid[rich]`.
+Render as a [Rich](https://rich.readthedocs.io/) `Text` object with colors. Requires `pip install termaid[rich]`.
 
 ### `MermaidWidget`
 
-A [Textual](https://textual.textualize.io/) widget with a reactive `source` attribute. Requires `pip install termmaid[textual]`. Updates live when you change the `source` property.
+A [Textual](https://textual.textualize.io/) widget with a reactive `source` attribute. Requires `pip install termaid[textual]`. Updates live when you change the `source` property.
 
 ```python
-from termmaid import MermaidWidget
+from termaid import MermaidWidget
 
 class MyApp(App):
     def compose(self):
@@ -372,8 +372,8 @@ Six built-in themes for `--theme` / `render_rich()`:
 ## Optional extras
 
 ```bash
-pip install termmaid[rich]      # Colored terminal output
-pip install termmaid[textual]   # Textual TUI widget
+pip install termaid[rich]      # Colored terminal output
+pip install termaid[textual]   # Textual TUI widget
 ```
 
 ## Limitations

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from termmaid import render
+from termaid import render
 from tests.conftest import (
     assert_reasonable_dimensions,
     assert_valid_unicode,

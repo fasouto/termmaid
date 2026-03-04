@@ -1,8 +1,8 @@
 """Tests for ER diagram parsing and rendering."""
 from __future__ import annotations
 
-from termmaid import render
-from termmaid.parser.erdiagram import parse_er_diagram
+from termaid import render
+from termaid.parser.erdiagram import parse_er_diagram
 
 
 # ── Parser tests ──────────────────────────────────────────────────────────────

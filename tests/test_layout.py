@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid.parser.flowchart import parse_flowchart
-from termmaid.layout.grid import compute_layout, STRIDE
+from termaid.parser.flowchart import parse_flowchart
+from termaid.layout.grid import compute_layout, STRIDE
 
 
 class TestLayerAssignment:

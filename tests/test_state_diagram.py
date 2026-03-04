@@ -6,10 +6,10 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid import parse, render
-from termmaid.parser.statediagram import parse_state_diagram
-from termmaid.graph.model import Direction, EdgeStyle
-from termmaid.graph.shapes import NodeShape
+from termaid import parse, render
+from termaid.parser.statediagram import parse_state_diagram
+from termaid.graph.model import Direction, EdgeStyle
+from termaid.graph.shapes import NodeShape
 
 
 # ── Parser tests ──────────────────────────────────────────────────────────────

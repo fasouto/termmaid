@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid import render
+from termaid import render
 
 
 # ── Unicode mode (default) ────────────────────────────────────────────────────

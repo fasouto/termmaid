@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid.renderer.themes import THEMES, get_theme, Theme
+from termaid.renderer.themes import THEMES, get_theme, Theme
 
 
 class TestThemeRegistry:
@@ -45,18 +45,18 @@ class TestCanvasStyleGrid:
     """Test that canvas style grid works correctly."""
 
     def test_style_grid_initialized(self):
-        from termmaid.renderer.canvas import Canvas
+        from termaid.renderer.canvas import Canvas
         c = Canvas(10, 5)
         assert c.get_style(0, 0) == "default"
 
     def test_put_with_style(self):
-        from termmaid.renderer.canvas import Canvas
+        from termaid.renderer.canvas import Canvas
         c = Canvas(10, 5)
         c.put(0, 0, "X", style="node")
         assert c.get_style(0, 0) == "node"
 
     def test_to_styled_pairs(self):
-        from termmaid.renderer.canvas import Canvas
+        from termaid.renderer.canvas import Canvas
         c = Canvas(5, 3)
         c.put(0, 0, "A", style="node")
         c.put(0, 1, "─", style="edge")
@@ -66,8 +66,8 @@ class TestCanvasStyleGrid:
 
     def test_styles_in_rendered_output(self):
         """Verify style keys are set during rendering."""
-        from termmaid import parse
-        from termmaid.renderer.draw import render_graph_canvas
+        from termaid import parse
+        from termaid.renderer.draw import render_graph_canvas
 
         graph = parse("graph LR\n  A --> B")
         canvas = render_graph_canvas(graph)
@@ -94,26 +94,26 @@ class TestRichRendering:
         pytest.importorskip("rich")
 
     def test_render_rich_returns_text(self):
-        from termmaid import render_rich
+        from termaid import render_rich
         result = render_rich("graph LR\n  A --> B")
         from rich.text import Text
         assert isinstance(result, Text)
 
     def test_render_rich_contains_labels(self):
-        from termmaid import render_rich
+        from termaid import render_rich
         result = render_rich("graph LR\n  A --> B")
         plain = result.plain
         assert "A" in plain
         assert "B" in plain
 
     def test_render_rich_with_theme(self):
-        from termmaid import render_rich
+        from termaid import render_rich
         result = render_rich("graph LR\n  A --> B", theme="terra")
         assert len(result.plain) > 0
 
     @pytest.mark.parametrize("theme", ["default", "terra", "neon", "mono", "amber", "phosphor"])
     def test_all_themes_render(self, theme: str):
-        from termmaid import render_rich
+        from termaid import render_rich
         result = render_rich("graph LR\n  A --> B", theme=theme)
         assert "A" in result.plain
         assert "B" in result.plain

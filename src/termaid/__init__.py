@@ -1,4 +1,4 @@
-"""termmaid - Render Mermaid diagram syntax as beautiful Unicode art in the terminal."""
+"""termaid - Render Mermaid diagram syntax as beautiful Unicode art in the terminal."""
 from __future__ import annotations
 
 import re
@@ -55,7 +55,7 @@ def render(
         Rendered diagram as a string
 
     Example:
-        >>> from termmaid import render
+        >>> from termaid import render
         >>> print(render("graph LR\\n  A --> B --> C"))
     """
     try:
@@ -94,7 +94,7 @@ def render(
         from .output.text import render_text
         return render_text(graph, use_ascii=use_ascii, padding_x=padding_x, padding_y=padding_y, rounded_edges=rounded_edges)
     except Exception as exc:
-        return f"[termmaid] Failed to render diagram: {exc}"
+        return f"[termaid] Failed to render diagram: {exc}"
 
 
 def render_rich(
@@ -108,7 +108,7 @@ def render_rich(
 ):
     """Render mermaid syntax as a Rich Text object with colors.
 
-    Requires: pip install termmaid[rich]
+    Requires: pip install termaid[rich]
 
     Args:
         source: Mermaid diagram source text
@@ -167,7 +167,7 @@ def render_rich(
         return _render_rich(graph, use_ascii=use_ascii, padding_x=padding_x, padding_y=padding_y, rounded_edges=rounded_edges, theme=theme)
     except Exception as exc:
         from rich.text import Text
-        return Text(f"[termmaid] Failed to render diagram: {exc}")
+        return Text(f"[termaid] Failed to render diagram: {exc}")
 
 
 # Lazy import for MermaidWidget
@@ -175,4 +175,4 @@ def __getattr__(name: str):
     if name == "MermaidWidget":
         from .output.widget import _get_widget_class
         return _get_widget_class()
-    raise AttributeError(f"module 'termmaid' has no attribute {name!r}")
+    raise AttributeError(f"module 'termaid' has no attribute {name!r}")

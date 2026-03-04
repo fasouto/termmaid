@@ -1,8 +1,8 @@
 """Tests for block diagram parsing and rendering."""
 from __future__ import annotations
 
-from termmaid import render
-from termmaid.parser.blockdiagram import parse_block_diagram
+from termaid import render
+from termaid.parser.blockdiagram import parse_block_diagram
 
 
 # ── Parser tests ──────────────────────────────────────────────────────────────

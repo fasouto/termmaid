@@ -148,7 +148,7 @@ wheels = [
 ]
 
 [[package]]
-name = "termmaid"
+name = "termaid"
 version = "0.1.0"
 source = { editable = "." }
 

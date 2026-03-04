@@ -1,8 +1,8 @@
 """Tests for gitGraph diagram parsing and rendering."""
 from __future__ import annotations
 
-from termmaid import render
-from termmaid.parser.gitgraph import parse_git_graph
+from termaid import render
+from termaid.parser.gitgraph import parse_git_graph
 
 
 # ── Parser tests ──────────────────────────────────────────────────────────────

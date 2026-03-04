@@ -1,11 +1,11 @@
 """Tests for the warnings system and error handling."""
 from __future__ import annotations
 
-from termmaid import render
-from termmaid.parser.sequence import parse_sequence_diagram
-from termmaid.parser.classdiagram import parse_class_diagram
-from termmaid.parser.erdiagram import parse_er_diagram
-from termmaid.parser.gitgraph import parse_git_graph
+from termaid import render
+from termaid.parser.sequence import parse_sequence_diagram
+from termaid.parser.classdiagram import parse_class_diagram
+from termaid.parser.erdiagram import parse_er_diagram
+from termaid.parser.gitgraph import parse_git_graph
 
 
 class TestWarnings:

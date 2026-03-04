@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import pytest
 
-from termmaid import render
-from termmaid.parser.flowchart import parse_flowchart
-from termmaid.graph.shapes import NodeShape
+from termaid import render
+from termaid.parser.flowchart import parse_flowchart
+from termaid.graph.shapes import NodeShape
 
 
 # ── Parser shape detection ────────────────────────────────────────────────────
