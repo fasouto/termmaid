@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.1.2 (2026-03-04)
+## 0.1.3 (2026-03-04)
 
 - Add `--tui` flag to CLI for interactive TUI viewer
+- Update demo GIF with pipe and TUI examples
 
 ## 0.1.1 (2026-03-04)
 
