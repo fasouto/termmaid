@@ -8,7 +8,7 @@
 
 ## Features
 
-- **7 diagram types:** flowcharts, sequence, class, ER, state, block, and git graphs
+- **8 diagram types:** flowcharts, sequence, class, ER, state, block, git graphs, and pie charts
 - **Zero dependencies:** pure Python, nothing to install beyond the package itself
 - **Rich and Textual integration:** colored output and TUI widgets with optional extras
 - **6 color themes:** default, terra, neon, mono, amber, phosphor
@@ -327,6 +327,29 @@ gitGraph
 **Commit types:** `NORMAL` (●), `REVERSE` (✖), `HIGHLIGHT` (■)
 
 **Config:** `%%{init: {"gitGraph": {"mainBranchName": "master"}}}%%`
+
+### Pie charts
+
+Yes, the syntax says `pie`. No, we don't draw a circle. I know. Have you ever tried to read a pie chart made of `█` and `▓`? Exactly. We render them as horizontal bar charts instead.
+
+```mermaid
+pie title Pets adopted by volunteers
+    "Dogs" : 386
+    "Cats" : 85
+    "Rats" : 15
+```
+
+```
+      ┌────────────────────────────────────────┐
+      │████████████████████████████████▓▓▓▓▓▓▓░│
+      └────────────────────────────────────────┘
+
+  Dogs┃████████████████████████████████  79.4%
+  Cats┃▓▓▓▓▓▓▓  17.5%
+  Rats┃░   3.1%
+```
+
+**Features:** `title`, `showData` (display raw values), `%%` comments
 
 ## CLI options
 
