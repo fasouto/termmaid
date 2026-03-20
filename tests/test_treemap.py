@@ -189,24 +189,28 @@ class TestTreemapRendering:
         # Big should appear in at least as many lines as Small
         assert big_cols >= small_cols
 
-    def test_rounded_corners_at_root(self):
+    def test_leaf_nodes_solid_borders(self):
         output = render(
             'treemap-beta\n'
             '    "A": 50\n'
             '    "B": 50'
         )
-        assert "╭" in output
-        assert "╯" in output
+        # Leaf nodes use solid borders
+        assert "─" in output
+        assert "│" in output
 
-    def test_sharp_corners_for_children(self):
+    def test_section_nodes_dashed_borders(self):
         output = render(
             'treemap-beta\n'
             '    "Parent"\n'
             '        "Child": 10'
         )
-        # Children use sharp corners (┌ ┐ └ ┘)
-        assert "┌" in output
-        assert "┘" in output
+        # Section nodes use dashed borders
+        assert "┄" in output
+        assert "┆" in output
+        # Children use solid borders
+        assert "─" in output
+        assert "│" in output
 
     def test_single_node(self):
         output = render(

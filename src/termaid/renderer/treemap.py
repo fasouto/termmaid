@@ -2,6 +2,7 @@
 
 Renders a Treemap as nested rectangles on a Canvas using a
 squarified layout algorithm for readable proportions.
+Section nodes use dashed borders; leaf nodes use solid borders.
 """
 from __future__ import annotations
 
@@ -9,10 +10,10 @@ from ..model.treemap import Treemap, TreemapNode
 from .canvas import Canvas
 from .charset import ASCII, UNICODE, CharSet
 
-_MARGIN = 1
-_MIN_BOX_W = 4
+_MIN_BOX_W = 6
 _MIN_BOX_H = 3
-_HEADER_H = 1  # rows reserved for section label inside its border
+_GAP = 1  # gap between sibling boxes
+_LABEL_PAD = 2  # minimum padding around label text inside a box
 
 
 def render_treemap(
@@ -30,16 +31,48 @@ def render_treemap(
     if total <= 0:
         return Canvas(1, 1)
 
-    # Size the canvas proportional to total value
-    canvas_w = max(60, min(120, int(total ** 0.5) * 4 + 20))
-    canvas_h = max(20, min(50, int(total ** 0.5) * 2 + 10))
+    canvas_h = _compute_height(diagram.roots)
+    min_w = _compute_min_width(diagram.roots)
+
+    # Scale width: give ~1.8x minimum for breathing room, capped at 120
+    canvas_w = min(120, max(60, int(min_w * 1.8)))
 
     canvas = Canvas(canvas_w, canvas_h)
-
-    # Layout the roots into the full canvas area
     _layout_nodes(canvas, cs, diagram.roots, 0, 0, canvas_w, canvas_h, depth=0)
 
     return canvas
+
+
+def _compute_height(nodes: list[TreemapNode]) -> int:
+    """Compute the minimum height needed to render a list of nodes."""
+    max_h = 0
+    for node in nodes:
+        if node.children:
+            child_h = _compute_height(node.children)
+            h = child_h + 4  # top border + label + child area + bottom border
+        else:
+            h = 4  # top border + label + value + bottom border
+        max_h = max(max_h, h)
+    return max_h
+
+
+def _compute_min_width(nodes: list[TreemapNode]) -> int:
+    """Compute the minimum width needed to render sibling nodes side by side."""
+    total = 0
+    for node in nodes:
+        if node.children:
+            child_w = _compute_min_width(node.children)
+            # borders (2) + child content
+            node_w = child_w + 2
+        else:
+            # borders (2) + label padding
+            label_w = len(node.label) + _LABEL_PAD
+            node_w = max(_MIN_BOX_W, label_w + 2)
+        total += node_w
+
+    # Add gaps between siblings
+    total += _GAP * max(0, len(nodes) - 1)
+    return total
 
 
 def _layout_nodes(
@@ -49,7 +82,7 @@ def _layout_nodes(
     x: int, y: int, w: int, h: int,
     depth: int,
 ) -> None:
-    """Recursively lay out nodes into the given rectangle using squarified slicing."""
+    """Recursively lay out nodes into the given rectangle."""
     if not nodes or w < _MIN_BOX_W or h < _MIN_BOX_H:
         return
 
@@ -57,13 +90,10 @@ def _layout_nodes(
     if total <= 0:
         return
 
-    # Sort by value descending for better squarification
+    # Sort by value descending for better layout
     sorted_nodes = sorted(nodes, key=lambda n: n.total_value, reverse=True)
 
-    # Slice alternating between horizontal and vertical
-    horizontal = w >= h
-
-    _slice_layout(canvas, cs, sorted_nodes, x, y, w, h, horizontal, total, depth)
+    _slice_layout(canvas, cs, sorted_nodes, x, y, w, h, total, depth)
 
 
 def _slice_layout(
@@ -71,42 +101,74 @@ def _slice_layout(
     cs: CharSet,
     nodes: list[TreemapNode],
     x: int, y: int, w: int, h: int,
-    horizontal: bool,
     total: float,
     depth: int,
 ) -> None:
-    """Lay out nodes by slicing along one axis."""
-    remaining = total
-    pos = 0  # running position along the slicing axis
-    extent = w if horizontal else h
+    """Lay out nodes side by side horizontally with gaps."""
+    n_gaps = len(nodes) - 1
+    total_gap_w = _GAP * n_gaps
+    usable_w = w - total_gap_w
 
+    if usable_w < _MIN_BOX_W * len(nodes):
+        # Not enough space for gaps, drop them
+        total_gap_w = 0
+        usable_w = w
+        n_gaps = 0
+
+    # Compute minimum widths for each node
+    min_widths = []
+    for node in nodes:
+        if node.children:
+            mw = _compute_min_width(node.children) + 2
+        else:
+            mw = _MIN_BOX_W
+        min_widths.append(mw)
+
+    # Distribute width proportionally, respecting minimums
+    raw_sizes = []
+    for node in nodes:
+        raw_sizes.append(node.total_value / total * usable_w)
+
+    # Adjust: ensure minimums are met, redistribute excess
+    sizes = list(raw_sizes)
+    for _ in range(3):  # iterate to stabilize
+        deficit = 0
+        surplus_total = 0
+        for i in range(len(sizes)):
+            if sizes[i] < min_widths[i]:
+                deficit += min_widths[i] - sizes[i]
+                sizes[i] = min_widths[i]
+            else:
+                surplus_total += sizes[i] - min_widths[i]
+        if deficit > 0 and surplus_total > 0:
+            scale = max(0, 1 - deficit / surplus_total)
+            for i in range(len(sizes)):
+                if sizes[i] > min_widths[i]:
+                    excess = sizes[i] - min_widths[i]
+                    sizes[i] = min_widths[i] + excess * scale
+
+    # Round to integers
+    int_sizes = [max(min_widths[i], round(sizes[i])) for i in range(len(sizes))]
+
+    # Fix total to match usable_w
+    current_total = sum(int_sizes)
+    if current_total != usable_w:
+        diff = usable_w - current_total
+        # Adjust the largest node
+        largest_idx = max(range(len(int_sizes)), key=lambda i: int_sizes[i])
+        int_sizes[largest_idx] = max(min_widths[largest_idx], int_sizes[largest_idx] + diff)
+
+    # Draw each node
+    pos_x = x
     for i, node in enumerate(nodes):
-        frac = node.total_value / remaining if remaining > 0 else 0
-        remaining_extent = extent - pos
+        bw = int_sizes[i]
+        # Clamp to available space
+        bw = min(bw, x + w - pos_x)
+        if bw < _MIN_BOX_W:
+            break
 
-        if i == len(nodes) - 1:
-            # Last node takes whatever is left
-            size = remaining_extent
-        else:
-            size = max(
-                _MIN_BOX_W if horizontal else _MIN_BOX_H,
-                round(frac * remaining_extent),
-            )
-
-        remaining -= node.total_value
-
-        if horizontal:
-            bx, by, bw, bh = x + pos, y, size, h
-        else:
-            bx, by, bw, bh = x, y + pos, w, size
-
-        # Clamp
-        bw = max(_MIN_BOX_W, min(bw, w - (bx - x)))
-        bh = max(_MIN_BOX_H, min(bh, h - (by - y)))
-
-        _draw_node(canvas, cs, node, bx, by, bw, bh, depth)
-
-        pos += size
+        _draw_node(canvas, cs, node, pos_x, y, bw, h, depth)
+        pos_x += bw + (_GAP if i < n_gaps else 0)
 
 
 def _draw_node(
@@ -120,15 +182,22 @@ def _draw_node(
     if w < _MIN_BOX_W or h < _MIN_BOX_H:
         return
 
-    # Draw box border
-    tl = cs.round_top_left if depth == 0 else cs.top_left
-    tr = cs.round_top_right if depth == 0 else cs.top_right
-    bl = cs.round_bottom_left if depth == 0 else cs.bottom_left
-    br = cs.round_bottom_right if depth == 0 else cs.bottom_right
-    hz = cs.horizontal
-    vt = cs.vertical
+    is_section = bool(node.children)
 
-    style = "node" if depth == 0 else "subgraph"
+    # Section nodes (with children) get dashed borders
+    if is_section:
+        hz = cs.line_dotted_h
+        vt = cs.line_dotted_v
+    else:
+        hz = cs.horizontal
+        vt = cs.vertical
+
+    tl = cs.top_left
+    tr = cs.top_right
+    bl = cs.bottom_left
+    br = cs.bottom_right
+
+    style = "subgraph" if is_section else "node"
 
     # Top border
     canvas.put(y, x, tl, merge=False, style=style)
@@ -147,7 +216,7 @@ def _draw_node(
         canvas.put(r, x, vt, merge=False, style=style)
         canvas.put(r, x + w - 1, vt, merge=False, style=style)
 
-    # Label
+    # Label — centered on the first inner row
     label = node.label
     inner_w = w - 2
     if len(label) > inner_w:
@@ -155,7 +224,7 @@ def _draw_node(
     label_col = x + 1 + max(0, (inner_w - len(label)) // 2)
     canvas.put_text(y + 1, label_col, label, style="label")
 
-    # Value (for leaves)
+    # Value (for leaves only)
     if not node.children and node.value > 0 and h >= 4:
         val_str = f"{node.value:g}"
         if len(val_str) > inner_w:
@@ -165,11 +234,10 @@ def _draw_node(
 
     # Recurse into children
     if node.children:
-        # Children go inside the box, below the label
         inner_x = x + 1
-        inner_y = y + 2  # skip border + label row
-        inner_w = w - 2
-        inner_h = h - 3  # border top + label + border bottom
+        inner_y = y + 2  # skip border + label
+        inner_w_val = w - 2
+        inner_h = h - 3  # top border + label + bottom border
 
-        if inner_w >= _MIN_BOX_W and inner_h >= _MIN_BOX_H:
-            _layout_nodes(canvas, cs, node.children, inner_x, inner_y, inner_w, inner_h, depth + 1)
+        if inner_w_val >= _MIN_BOX_W and inner_h >= _MIN_BOX_H:
+            _layout_nodes(canvas, cs, node.children, inner_x, inner_y, inner_w_val, inner_h, depth + 1)
