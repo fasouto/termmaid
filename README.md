@@ -8,7 +8,7 @@
 
 ## Features
 
-- **8 diagram types:** flowcharts, sequence, class, ER, state, block, git graphs, and pie charts
+- **9 diagram types:** flowcharts, sequence, class, ER, state, block, git graphs, pie charts, and treemaps
 - **Zero dependencies:** pure Python, nothing to install beyond the package itself
 - **Rich and Textual integration:** colored output and TUI widgets with optional extras
 - **6 color themes:** default, terra, neon, mono, amber, phosphor
@@ -346,6 +346,30 @@ pie title Pets adopted by volunteers
 ```
 
 **Features:** `title`, `showData` (display raw values), `%%` comments
+
+### Treemaps
+
+```mermaid
+treemap-beta
+    "Frontend"
+        "React": 40
+        "CSS": 15
+    "Backend"
+        "API": 35
+        "Auth": 10
+```
+
+```
+╭───────────────────────────────╮╭─────────────────────────╮
+│           Frontend            ││         Backend          │
+│┌───────────────────┐┌────────┐││┌────────────────┐┌─────┐│
+││      React        ││  CSS   ││││      API       ││Auth ││
+││        40         ││   15   ││││       35       ││ 10  ││
+│└───────────────────┘└────────┘││└────────────────┘└─────┘│
+╰───────────────────────────────╯╰─────────────────────────╯
+```
+
+**Features:** nested sections via indentation, `"label": value` syntax, proportional sizing, `%%` comments
 
 ## CLI options
 
