@@ -10,10 +10,10 @@ from ..model.treemap import Treemap, TreemapNode
 from .canvas import Canvas
 from .charset import ASCII, UNICODE, CharSet
 
-_MIN_BOX_W = 6
+_MIN_BOX_W = 4
 _MIN_BOX_H = 3
 _GAP = 1  # gap between sibling boxes
-_LABEL_PAD = 2  # minimum padding around label text inside a box
+_LABEL_PAD = 0  # minimum padding around label text inside a box
 
 
 def render_treemap(
@@ -34,8 +34,9 @@ def render_treemap(
     canvas_h = _compute_height(diagram.roots)
     min_w = _compute_min_width(diagram.roots)
 
-    # Scale width: give ~1.8x minimum for breathing room, capped at 120
-    canvas_w = min(120, max(60, int(min_w * 1.8)))
+    # Scale width: proportional for small diagrams, tight for large ones
+    # Cap at 120 unless the minimum requires more
+    canvas_w = max(min_w, min(120, max(60, int(min_w * 1.6))))
 
     canvas = Canvas(canvas_w, canvas_h)
     _layout_nodes(canvas, cs, diagram.roots, 0, 0, canvas_w, canvas_h, depth=0)
