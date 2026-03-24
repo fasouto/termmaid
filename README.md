@@ -6,6 +6,8 @@
   <img src="demo/termaid-demo.gif" alt="termaid demo" width="800">
 </p>
 
+**[Try it online at termaid.com](https://termaid.com)**
+
 ## Features
 
 - **9 diagram types:** flowcharts, sequence, class, ER, state, block, git graphs, pie charts, and treemaps
