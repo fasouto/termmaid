@@ -601,9 +601,20 @@ class _FlowchartParser:
             best_match: tuple[int, int, EdgeStyle, bool, bool, str, int, ArrowType, ArrowType] | None = None
 
             # First check for labeled arrows: -->|text| or -- text -->
+            # Use masked text for position matching, but extract the
+            # label from the original so quoted content isn't lost.
             label_match = self._find_labeled_arrow(masked)
             if label_match:
-                pos, end, style, arr_start, arr_end, label, length, type_start, type_end = label_match
+                pos, end, style, arr_start, arr_end, _masked_label, length, type_start, type_end = label_match
+                # Re-extract the label from the original text at the same span
+                original_span = remaining[pos:end]
+                pipe_start = original_span.find("|")
+                pipe_end = original_span.rfind("|")
+                if pipe_start >= 0 and pipe_end > pipe_start:
+                    label = original_span[pipe_start + 1:pipe_end].strip()
+                    label = _strip_quotes(label)
+                else:
+                    label = _masked_label
                 if best_match is None or pos < best_match[0]:
                     best_match = (pos, end, style, arr_start, arr_end, label, length, type_start, type_end)
 
