@@ -414,8 +414,6 @@ Project ──├─ Development ──╭─ Frontend
 | `--no-auto-fit` | Disable automatic compaction when diagram exceeds terminal width |
 | `--sharp-edges` | Sharp corners on edge turns instead of rounded |
 | `-o FILE` | Write output to file instead of stdout |
-| `--lint` | Validate diagram syntax without rendering (exit 0 if valid, 1 if not) |
-| `--lint --json` | Output validation result as JSON |
 | `--show-ids` | Show node IDs alongside labels for debugging (e.g. `myId: My Label`) |
 
 ## Python API

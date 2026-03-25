@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import shutil
 import sys
@@ -184,16 +183,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Write output to file instead of stdout",
     )
     parser.add_argument(
-        "--lint",
-        action="store_true",
-        help="Validate diagram syntax without rendering. Exit 0 if valid, 1 if not.",
-    )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="With --lint, output validation result as JSON.",
-    )
-    parser.add_argument(
         "--show-ids",
         action="store_true",
         help="Show node IDs alongside labels (e.g. 'A: Start') for debugging.",
@@ -218,10 +207,6 @@ def main(argv: list[str] | None = None) -> int:
     if not source:
         print("Error: Empty input.", file=sys.stderr)
         return 1
-
-    # Lint mode: validate syntax and exit
-    if args.lint:
-        return _lint(source, args)
 
     # TUI mode
     if args.tui:
@@ -289,54 +274,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     return 0
-
-
-def _lint(source: str, args: argparse.Namespace) -> int:
-    """Validate diagram syntax. Returns 0 if valid, 1 if invalid."""
-    try:
-        from termaid import render, parse
-        from termaid._strip_frontmatter import _strip_frontmatter
-    except ImportError:
-        _src_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        sys.path.insert(0, _src_dir)
-        from termaid import render, parse
-
-    error_msg: str | None = None
-
-    # First check: does render() report an error?
-    result = render(source)
-    if result.startswith("[termaid] Failed"):
-        error_msg = result.removeprefix("[termaid] Failed to render diagram: ")
-    elif not result.strip():
-        error_msg = "diagram produced no output"
-    else:
-        # Second check: for flowcharts/state diagrams, verify the graph
-        # has at least one node (catches garbage input that the parser
-        # silently ignores).
-        try:
-            graph = parse(source)
-            if not graph.nodes:
-                error_msg = "no nodes found in diagram"
-        except Exception:
-            pass  # non-flowchart types (sequence, etc.) skip this check
-
-    is_error = error_msg is not None
-
-    if args.json:
-        output: dict[str, object] = {
-            "valid": not is_error,
-            "file": args.file or "<stdin>",
-        }
-        if error_msg:
-            output["error"] = error_msg
-        print(json.dumps(output))
-    else:
-        if is_error:
-            print(f"Invalid: {error_msg}", file=sys.stderr)
-        else:
-            print("Valid", file=sys.stderr)
-
-    return 1 if is_error else 0
 
 
 def _run_tui(source: str, args: argparse.Namespace) -> int:

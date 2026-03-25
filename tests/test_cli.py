@@ -46,31 +46,6 @@ class TestCliMain:
         assert result == 0
 
 
-class TestCliLint:
-    def test_lint_valid(self, tmp_path: Path):
-        mmd = tmp_path / "test.mmd"
-        mmd.write_text("graph LR\n  A --> B")
-        result = main([str(mmd), "--lint"])
-        assert result == 0
-
-    def test_lint_json_valid(self, tmp_path: Path, capsys):
-        mmd = tmp_path / "test.mmd"
-        mmd.write_text("graph LR\n  A --> B")
-        result = main([str(mmd), "--lint", "--json"])
-        assert result == 0
-        import json
-        output = json.loads(capsys.readouterr().out)
-        assert output["valid"] is True
-
-    def test_lint_json_has_file(self, tmp_path: Path, capsys):
-        mmd = tmp_path / "test.mmd"
-        mmd.write_text("graph LR\n  A --> B")
-        main([str(mmd), "--lint", "--json"])
-        import json
-        output = json.loads(capsys.readouterr().out)
-        assert str(mmd) in output["file"]
-
-
 class TestCliOutput:
     def test_output_flag(self, tmp_path: Path):
         mmd = tmp_path / "test.mmd"
