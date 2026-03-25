@@ -463,6 +463,10 @@ pip install termaid[textual]   # Textual TUI widget
 - **Manhattan-only edge routing.** Edges use A* pathfinding on a grid. The engine auto-expands gaps for crossing edges and biases toward flow-aligned routes.
 - **Wide diagrams.** The CLI auto-compacts when the diagram exceeds terminal width. For very wide LR chains, use `--width N`, `--gap 1`, or pipe through `less -S`.
 
+## Gallery
+
+See [docs/gallery.md](docs/gallery.md) for rendered examples of all 78 supported diagram fixtures.
+
 ## Acknowledgements
 
 Inspired by [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii) by Alexander Grooff and [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) by Lukilabs.
