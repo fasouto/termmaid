@@ -100,6 +100,8 @@ def _compute_layout(
     diagram: SequenceDiagram,
     autonumber: bool,
     flat_events: list,
+    padding_x: int = _BOX_PAD,
+    min_gap: int = _MIN_GAP,
 ) -> tuple[list[int], list[int], int, int, int, list[int]]:
     """Compute column center positions and box widths.
 
@@ -110,7 +112,7 @@ def _compute_layout(
         return [], [], 0, 0, 0, []
 
     # Box widths based on label length
-    box_widths = [max(len(p.label) + _BOX_PAD, 12) for p in diagram.participants]
+    box_widths = [max(len(p.label) + padding_x, 12) for p in diagram.participants]
 
     # Header height: tallest participant kind
     header_height = max(_KIND_HEIGHT.get(p.kind, 3) for p in diagram.participants)
@@ -151,7 +153,7 @@ def _compute_layout(
             effective_labels.append("")
 
     # Compute per-gap minimum widths based on message labels between adjacent pairs
-    gap_mins = [_MIN_GAP] * (n - 1) if n > 1 else []
+    gap_mins = [min_gap] * (n - 1) if n > 1 else []
     for ev_idx, ev in enumerate(flat_events):
         if isinstance(ev, Note):
             # Notes may need gap expansion
@@ -481,7 +483,7 @@ def _is_activated(ranges: dict[str, list[tuple[int, int]]], pid: str, row: int) 
     return False
 
 
-def render_sequence(diagram: SequenceDiagram, *, use_ascii: bool = False) -> Canvas:
+def render_sequence(diagram: SequenceDiagram, *, use_ascii: bool = False, padding_x: int = 4, gap: int = 16) -> Canvas:
     """Render a SequenceDiagram to a Canvas."""
     cs = ASCII if use_ascii else UNICODE
 
@@ -489,7 +491,7 @@ def render_sequence(diagram: SequenceDiagram, *, use_ascii: bool = False) -> Can
     flat_events = _flatten_events(diagram.events)
 
     col_centers, box_widths, width, height, header_height, row_offsets = _compute_layout(
-        diagram, diagram.autonumber, flat_events
+        diagram, diagram.autonumber, flat_events, padding_x=padding_x, min_gap=gap
     )
     if width == 0:
         return Canvas(1, 1)

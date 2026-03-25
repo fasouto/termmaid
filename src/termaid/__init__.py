@@ -60,31 +60,40 @@ def render(
         >>> from termaid import render
         >>> print(render("graph LR\\n  A --> B --> C"))
     """
+    # Build extra kwargs only when values differ from flowchart defaults,
+    # so each renderer keeps its own defaults when the user doesn't
+    # explicitly override.
+    _extra: dict[str, int] = {}
+    if padding_x != 4:
+        _extra["padding_x"] = padding_x
+    if gap != 4:
+        _extra["gap"] = gap
+
     try:
         text = _strip_frontmatter(source.strip())
         if text.startswith("sequenceDiagram"):
             from .parser.sequence import parse_sequence_diagram
             from .renderer.sequence import render_sequence
             diagram = parse_sequence_diagram(text)
-            return render_sequence(diagram, use_ascii=use_ascii).to_string()
+            return render_sequence(diagram, use_ascii=use_ascii, **_extra).to_string()
 
         if text.startswith("classDiagram"):
             from .parser.classdiagram import parse_class_diagram
             from .renderer.classdiagram import render_class_diagram
             diagram = parse_class_diagram(text)
-            return render_class_diagram(diagram, use_ascii=use_ascii).to_string()
+            return render_class_diagram(diagram, use_ascii=use_ascii, **_extra).to_string()
 
         if text.startswith("erDiagram"):
             from .parser.erdiagram import parse_er_diagram
             from .renderer.erdiagram import render_er_diagram
             diagram = parse_er_diagram(text)
-            return render_er_diagram(diagram, use_ascii=use_ascii).to_string()
+            return render_er_diagram(diagram, use_ascii=use_ascii, **_extra).to_string()
 
         if text.startswith("block"):
             from .parser.blockdiagram import parse_block_diagram
             from .renderer.blockdiagram import render_block_diagram
             diagram = parse_block_diagram(text)
-            return render_block_diagram(diagram, use_ascii=use_ascii).to_string()
+            return render_block_diagram(diagram, use_ascii=use_ascii, **_extra).to_string()
 
         if text.startswith("gitGraph") or (text.startswith("%%{init") and "gitGraph" in text):
             from .parser.gitgraph import parse_git_graph
@@ -140,6 +149,10 @@ def render_rich(
     Returns:
         rich.text.Text object
     """
+    _extra_r: dict[str, int] = {}
+    if padding_x != 4:
+        _extra_r["padding_x"] = padding_x
+
     try:
         text = _strip_frontmatter(source.strip())
         if text.startswith("sequenceDiagram"):
@@ -147,7 +160,7 @@ def render_rich(
             from .renderer.sequence import render_sequence
             from .output.rich import render_sequence_rich
             diagram = parse_sequence_diagram(text)
-            canvas = render_sequence(diagram, use_ascii=use_ascii)
+            canvas = render_sequence(diagram, use_ascii=use_ascii, **_extra_r)
             return render_sequence_rich(canvas, theme=theme)
 
         if text.startswith("classDiagram"):
@@ -155,7 +168,7 @@ def render_rich(
             from .renderer.classdiagram import render_class_diagram
             from .output.rich import render_sequence_rich
             diagram = parse_class_diagram(text)
-            canvas = render_class_diagram(diagram, use_ascii=use_ascii)
+            canvas = render_class_diagram(diagram, use_ascii=use_ascii, **_extra_r)
             return render_sequence_rich(canvas, theme=theme)
 
         if text.startswith("erDiagram"):
@@ -163,7 +176,7 @@ def render_rich(
             from .renderer.erdiagram import render_er_diagram
             from .output.rich import render_sequence_rich
             diagram = parse_er_diagram(text)
-            canvas = render_er_diagram(diagram, use_ascii=use_ascii)
+            canvas = render_er_diagram(diagram, use_ascii=use_ascii, **_extra_r)
             return render_sequence_rich(canvas, theme=theme)
 
         if text.startswith("block"):
@@ -171,7 +184,7 @@ def render_rich(
             from .renderer.blockdiagram import render_block_diagram
             from .output.rich import render_sequence_rich
             diagram = parse_block_diagram(text)
-            canvas = render_block_diagram(diagram, use_ascii=use_ascii)
+            canvas = render_block_diagram(diagram, use_ascii=use_ascii, **_extra_r)
             return render_sequence_rich(canvas, theme=theme)
 
         if text.startswith("gitGraph") or (text.startswith("%%{init") and "gitGraph" in text):

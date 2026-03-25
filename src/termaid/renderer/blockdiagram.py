@@ -20,7 +20,7 @@ _MARGIN = 2
 _GROUP_PAD = 2  # inner margin for nested groups
 
 
-def render_block_diagram(diagram: BlockDiagram, *, use_ascii: bool = False) -> Canvas:
+def render_block_diagram(diagram: BlockDiagram, *, use_ascii: bool = False, padding_x: int = 2, gap: int = 4) -> Canvas:
     """Render a BlockDiagram to a Canvas."""
     cs = ASCII if use_ascii else UNICODE
 
@@ -37,17 +37,17 @@ def render_block_diagram(diagram: BlockDiagram, *, use_ascii: bool = False) -> C
 
     # Compute block sizes
     block_sizes: dict[str, tuple[int, int]] = {}
-    _compute_all_sizes(diagram.blocks, block_sizes, cs)
+    _compute_all_sizes(diagram.blocks, block_sizes, cs, padding_x=padding_x, col_gap=gap)
 
     # Compute column widths and row heights
-    col_widths, row_heights = _compute_grid_dimensions(grid, col_count, block_sizes)
+    col_widths, row_heights = _compute_grid_dimensions(grid, col_count, block_sizes, col_gap=gap)
 
     # Compute block positions
     positions: dict[str, tuple[int, int]] = {}
-    _compute_positions(grid, col_widths, row_heights, block_sizes, positions)
+    _compute_positions(grid, col_widths, row_heights, block_sizes, positions, col_gap=gap)
 
     # Canvas size
-    total_w = _MARGIN * 2 + sum(col_widths) + _COL_GAP * max(0, col_count - 1)
+    total_w = _MARGIN * 2 + sum(col_widths) + gap * max(0, col_count - 1)
     total_h = _MARGIN * 2 + sum(row_heights) + _ROW_GAP * max(0, len(grid) - 1)
 
     # Expand for links that might go outside
@@ -98,7 +98,7 @@ def _layout_grid(
     return grid, columns
 
 
-def _compute_block_size(block: Block, cs: CharSet) -> tuple[int, int]:
+def _compute_block_size(block: Block, cs: CharSet, padding_x: int = _BLOCK_PAD, col_gap: int = _COL_GAP) -> tuple[int, int]:
     """Compute (width, height) for a single block."""
     if block.is_space:
         return _MIN_BLOCK_W, _MIN_BLOCK_H
@@ -108,9 +108,9 @@ def _compute_block_size(block: Block, cs: CharSet) -> tuple[int, int]:
         inner_cols = block.columns if block.columns > 0 else sum(c.col_span for c in block.children)
         inner_grid, inner_col_count = _layout_grid(block.children, inner_cols)
         child_sizes: dict[str, tuple[int, int]] = {}
-        _compute_all_sizes(block.children, child_sizes, cs)
-        col_widths, row_heights = _compute_grid_dimensions(inner_grid, inner_col_count, child_sizes)
-        inner_w = sum(col_widths) + _COL_GAP * max(0, inner_col_count - 1)
+        _compute_all_sizes(block.children, child_sizes, cs, padding_x=padding_x, col_gap=col_gap)
+        col_widths, row_heights = _compute_grid_dimensions(inner_grid, inner_col_count, child_sizes, col_gap=col_gap)
+        inner_w = sum(col_widths) + col_gap * max(0, inner_col_count - 1)
         inner_h = sum(row_heights) + _ROW_GAP * max(0, len(inner_grid) - 1)
         # Add group padding + borders (+ label row if labeled)
         w = inner_w + _GROUP_PAD * 2 + 2  # borders
@@ -119,25 +119,27 @@ def _compute_block_size(block: Block, cs: CharSet) -> tuple[int, int]:
         return max(w, _MIN_BLOCK_W), max(h, _MIN_BLOCK_H)
 
     label = block.label or block.id
-    w = max(len(label) + _BLOCK_PAD * 2, _MIN_BLOCK_W)
+    w = max(len(label) + padding_x * 2, _MIN_BLOCK_W)
     h = _MIN_BLOCK_H
     return w, h
 
 
 def _compute_all_sizes(
     blocks: list[Block], sizes: dict[str, tuple[int, int]], cs: CharSet,
+    padding_x: int = _BLOCK_PAD, col_gap: int = _COL_GAP,
 ) -> None:
     """Compute sizes for all blocks recursively."""
     for block in blocks:
-        sizes[block.id] = _compute_block_size(block, cs)
+        sizes[block.id] = _compute_block_size(block, cs, padding_x=padding_x, col_gap=col_gap)
         if block.children:
-            _compute_all_sizes(block.children, sizes, cs)
+            _compute_all_sizes(block.children, sizes, cs, padding_x=padding_x, col_gap=col_gap)
 
 
 def _compute_grid_dimensions(
     grid: list[list[tuple[Block, int, int]]],
     col_count: int,
     sizes: dict[str, tuple[int, int]],
+    col_gap: int = _COL_GAP,
 ) -> tuple[list[int], list[int]]:
     """Compute column widths and row heights."""
     col_widths = [_MIN_BLOCK_W] * col_count
@@ -157,7 +159,7 @@ def _compute_grid_dimensions(
             if span <= 1:
                 continue
             w, _ = sizes.get(block.id, (_MIN_BLOCK_W, _MIN_BLOCK_H))
-            available = sum(col_widths[start_col:start_col + span]) + _COL_GAP * (span - 1)
+            available = sum(col_widths[start_col:start_col + span]) + col_gap * (span - 1)
             if w > available:
                 extra = w - available
                 per_col = extra // span
@@ -176,6 +178,7 @@ def _compute_positions(
     row_heights: list[int],
     sizes: dict[str, tuple[int, int]],
     positions: dict[str, tuple[int, int]],
+    col_gap: int = _COL_GAP,
 ) -> None:
     """Compute (x, y) positions for all blocks."""
     # Precompute column x positions
@@ -183,7 +186,7 @@ def _compute_positions(
     x = _MARGIN
     for c in range(len(col_widths)):
         col_x[c] = x
-        x += col_widths[c] + _COL_GAP
+        x += col_widths[c] + col_gap
 
     # Precompute row y positions
     row_y = [0] * len(row_heights)
@@ -213,7 +216,7 @@ def _compute_positions(
 
             # Position children inside group
             if block.children:
-                _position_children(block, bx, by, bw, bh, sizes, positions)
+                _position_children(block, bx, by, bw, bh, sizes, positions, col_gap=col_gap)
 
 
 def _position_children(
@@ -221,6 +224,7 @@ def _position_children(
     gx: int, gy: int, gw: int, gh: int,
     sizes: dict[str, tuple[int, int]],
     positions: dict[str, tuple[int, int]],
+    col_gap: int = _COL_GAP,
 ) -> None:
     """Position children of a group block within its bounds."""
     inner_x = gx + _GROUP_PAD + 1  # after border + padding
@@ -229,14 +233,14 @@ def _position_children(
 
     inner_cols = group.columns if group.columns > 0 else sum(c.col_span for c in group.children)
     inner_grid, inner_col_count = _layout_grid(group.children, inner_cols)
-    col_widths, row_heights = _compute_grid_dimensions(inner_grid, inner_col_count, sizes)
+    col_widths, row_heights = _compute_grid_dimensions(inner_grid, inner_col_count, sizes, col_gap=col_gap)
 
     # Position children in inner grid
     child_col_x = [0] * len(col_widths)
     x = inner_x
     for c in range(len(col_widths)):
         child_col_x[c] = x
-        x += col_widths[c] + _COL_GAP
+        x += col_widths[c] + col_gap
 
     child_row_y = [0] * len(row_heights)
     y = inner_y

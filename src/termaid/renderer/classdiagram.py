@@ -34,7 +34,7 @@ def _format_member(member) -> str:
     return "".join(parts)
 
 
-def _compute_box_size(cls: ClassDef) -> tuple[int, int]:
+def _compute_box_size(cls: ClassDef, padding_x: int = _CLASS_PAD) -> tuple[int, int]:
     """Compute (width, height) for a class box."""
     # Annotation line
     lines: list[str] = []
@@ -53,7 +53,7 @@ def _compute_box_size(cls: ClassDef) -> tuple[int, int]:
 
     all_lines = lines + member_lines
     max_text = max((len(l) for l in all_lines), default=0)
-    width = max(max_text + _CLASS_PAD * 2, _MIN_BOX_WIDTH)
+    width = max(max_text + padding_x * 2, _MIN_BOX_WIDTH)
 
     # Height: top border + name rows + dividers + member rows + bottom border
     height = 2  # top + bottom borders
@@ -74,9 +74,10 @@ def _compute_box_size(cls: ClassDef) -> tuple[int, int]:
 
 def _draw_class_box(
     canvas: Canvas, x: int, y: int, cls: ClassDef, cs: CharSet,
+    padding_x: int = _CLASS_PAD,
 ) -> tuple[int, int]:
     """Draw a class box and return (width, height)."""
-    width, height = _compute_box_size(cls)
+    width, height = _compute_box_size(cls, padding_x=padding_x)
     style = "node"
 
     # Top border
@@ -125,7 +126,7 @@ def _draw_class_box(
         # Attributes
         for m in attributes:
             text = _format_member(m)
-            canvas.put_text(row, x + _CLASS_PAD, text, style="label")
+            canvas.put_text(row, x + padding_x, text, style="label")
             row += 1
 
         if has_attrs and has_methods:
@@ -139,7 +140,7 @@ def _draw_class_box(
         # Methods
         for m in methods:
             text = _format_member(m)
-            canvas.put_text(row, x + _CLASS_PAD, text, style="label")
+            canvas.put_text(row, x + padding_x, text, style="label")
             row += 1
 
     return width, height
@@ -207,6 +208,8 @@ def _assign_layers(diagram: ClassDiagram) -> list[list[str]]:
 
 def _compute_layout(
     diagram: ClassDiagram,
+    padding_x: int = _CLASS_PAD,
+    gap: int = _SIBLING_GAP,
 ) -> tuple[dict[str, tuple[int, int]], dict[str, tuple[int, int]], int, int, dict[str, int]]:
     """Compute positions and sizes for all classes.
 
@@ -222,7 +225,7 @@ def _compute_layout(
     # Compute box sizes
     sizes: dict[str, tuple[int, int]] = {}
     for name, cls in diagram.classes.items():
-        sizes[name] = _compute_box_size(cls)
+        sizes[name] = _compute_box_size(cls, padding_x=padding_x)
 
     # Build set of class names in each layer for gap computation
     layer_of: dict[str, int] = {}
@@ -236,10 +239,10 @@ def _compute_layout(
     for rel in diagram.relationships:
         s, t = rel.source, rel.target
         if s in layer_of and t in layer_of and layer_of[s] == layer_of[t]:
-            gap = len(rel.label) + 4 if rel.label else _SIBLING_GAP
-            gap = max(gap, _SIBLING_GAP)
+            pair_g = len(rel.label) + 4 if rel.label else gap
+            pair_g = max(pair_g, gap)
             key = (min(s, t), max(s, t))
-            pair_gap[key] = max(pair_gap.get(key, _SIBLING_GAP), gap)
+            pair_gap[key] = max(pair_gap.get(key, gap), pair_g)
 
     is_lr = diagram.direction == "LR"
 
@@ -258,13 +261,13 @@ def _compute_layout(
                 # Center horizontally within column
                 x_offset = (layer_width - w) // 2
                 positions[name] = (col_x + x_offset, row_y)
-                row_y += h + _SIBLING_GAP
+                row_y += h + gap
 
-            total_layer_height = row_y - _SIBLING_GAP + _MARGIN
+            total_layer_height = row_y - gap + _MARGIN
             max_height = max(max_height, total_layer_height)
-            col_x += layer_width + _LAYER_GAP
+            col_x += layer_width + gap
 
-        canvas_width = col_x - _LAYER_GAP + _MARGIN
+        canvas_width = col_x - gap + _MARGIN
         canvas_height = max_height
     else:
         # TB: Layers are rows, classes placed horizontally
@@ -285,21 +288,21 @@ def _compute_layout(
                 if idx < len(layer) - 1:
                     next_name = layer[idx + 1]
                     key = (min(name, next_name), max(name, next_name))
-                    gap = pair_gap.get(key, _SIBLING_GAP)
-                    col_x += w + gap
+                    pair_g = pair_gap.get(key, gap)
+                    col_x += w + pair_g
                 else:
                     col_x += w
 
             max_width = max(max_width, col_x + _MARGIN)
-            row_y += layer_height + _LAYER_GAP
+            row_y += layer_height + gap
 
         canvas_width = max_width
-        canvas_height = row_y - _LAYER_GAP + _MARGIN
+        canvas_height = row_y - gap + _MARGIN
 
     # Center each layer
     if is_lr:
         for layer in layers:
-            layer_h = sum(sizes[n][1] for n in layer) + _SIBLING_GAP * (len(layer) - 1)
+            layer_h = sum(sizes[n][1] for n in layer) + gap * (len(layer) - 1)
             offset = (canvas_height - 2 * _MARGIN - layer_h) // 2
             if offset > 0:
                 for name in layer:
@@ -307,7 +310,7 @@ def _compute_layout(
                     positions[name] = (x, y + offset)
     else:
         for layer in layers:
-            layer_w = sum(sizes[n][0] for n in layer) + _SIBLING_GAP * (len(layer) - 1)
+            layer_w = sum(sizes[n][0] for n in layer) + gap * (len(layer) - 1)
             offset = (canvas_width - 2 * _MARGIN - layer_w) // 2
             if offset > 0:
                 for name in layer:
@@ -602,6 +605,7 @@ def _layout_notes(
     diagram: ClassDiagram,
     positions: dict[str, tuple[int, int]],
     sizes: dict[str, tuple[int, int]],
+    gap: int = _SIBLING_GAP,
 ) -> tuple[list[tuple[int, int]], dict[str, tuple[int, int]], int, int]:
     """Position notes and adjust class positions to avoid overlap.
 
@@ -649,7 +653,7 @@ def _layout_notes(
     for i, note in floating:
         nw, nh = _note_box_size(note)
         note_positions[i] = (float_x, _MARGIN)
-        float_x += nw + _SIBLING_GAP
+        float_x += nw + gap
 
     # Targeted notes: to the left of their target class, vertically aligned
     for i, note in targeted:
@@ -675,17 +679,17 @@ def _layout_notes(
     return note_positions, adjusted, max_w + _MARGIN, max_h + _MARGIN
 
 
-def render_class_diagram(diagram: ClassDiagram, *, use_ascii: bool = False) -> Canvas:
+def render_class_diagram(diagram: ClassDiagram, *, use_ascii: bool = False, padding_x: int = 2, gap: int = 4) -> Canvas:
     """Render a ClassDiagram to a Canvas."""
     cs = ASCII if use_ascii else UNICODE
 
-    positions, sizes, width, height, layer_of = _compute_layout(diagram)
+    positions, sizes, width, height, layer_of = _compute_layout(diagram, padding_x=padding_x, gap=gap)
     if width <= 1 and not diagram.notes:
         return Canvas(1, 1)
 
     # Position notes, adjusting class positions to make room
     note_positions, positions, width, height = _layout_notes(
-        diagram, positions, sizes)
+        diagram, positions, sizes, gap=gap)
 
     # Expand canvas to fit relationship labels placed beside vertical lines
     for rel in diagram.relationships:
@@ -713,7 +717,7 @@ def render_class_diagram(diagram: ClassDiagram, *, use_ascii: bool = False) -> C
     for name, cls in diagram.classes.items():
         if name in positions:
             x, y = positions[name]
-            _draw_class_box(canvas, x, y, cls, cs)
+            _draw_class_box(canvas, x, y, cls, cs, padding_x=padding_x)
 
     # Draw notes on top of everything
     for i, note in enumerate(diagram.notes):
