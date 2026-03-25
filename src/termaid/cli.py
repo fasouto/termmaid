@@ -35,6 +35,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Vertical padding inside node boxes (default: 2)",
     )
     parser.add_argument(
+        "--gap",
+        type=int,
+        default=4,
+        help="Space between nodes (default: 4). Use 1 or 2 for compact diagrams.",
+    )
+    parser.add_argument(
         "--sharp-edges",
         action="store_true",
         help="Use sharp corners on edge turns (┌┐└┘) instead of rounded (╭╮╰╯)",
@@ -53,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.1.3",
+        version="%(prog)s 0.2.0",
     )
 
     args = parser.parse_args(argv)
@@ -104,6 +110,7 @@ def main(argv: list[str] | None = None) -> int:
                     padding_x=args.padding_x,
                     padding_y=args.padding_y,
                     rounded_edges=not args.sharp_edges,
+                    gap=args.gap,
                 ))
 
         DiagramApp().run()
@@ -145,6 +152,7 @@ def main(argv: list[str] | None = None) -> int:
                 padding_x=args.padding_x,
                 padding_y=args.padding_y,
                 rounded_edges=not args.sharp_edges,
+                gap=args.gap,
             )
             print(result)
     except Exception as e:

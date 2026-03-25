@@ -383,6 +383,7 @@ treemap-beta
 | `--theme NAME` | Color theme: `default`, `terra`, `neon`, `mono`, `amber`, `phosphor` (requires `pip install termaid[rich]`) |
 | `--padding-x N` | Horizontal padding inside boxes (default: 4) |
 | `--padding-y N` | Vertical padding inside boxes (default: 2) |
+| `--gap N` | Space between nodes (default: 4). Use `1` or `2` for compact diagrams |
 | `--sharp-edges` | Sharp corners on edge turns instead of rounded |
 
 ## Python API
@@ -431,6 +432,7 @@ pip install termaid[textual]   # Textual TUI widget
 
 - **Layout engine is approximate.** Node positioning uses a grid-based barycenter heuristic. Graphs with many cross-layer edges may still produce crossings.
 - **Manhattan-only edge routing.** Edges use A* pathfinding on a grid. Very dense graphs may have overlapping edges.
+- **Wide LR diagrams.** Long horizontal chains can exceed terminal width. Use `--gap 1` or `--padding-x 0` for compact output, or pipe through `less -S` for horizontal scrolling.
 
 ## Acknowledgements
 

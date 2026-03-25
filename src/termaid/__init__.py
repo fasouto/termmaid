@@ -42,6 +42,7 @@ def render(
     padding_x: int = 4,
     padding_y: int = 2,
     rounded_edges: bool = True,
+    gap: int = 4,
 ) -> str:
     """Render mermaid syntax as Unicode (or ASCII) art.
 
@@ -50,6 +51,7 @@ def render(
         use_ascii: Use ASCII characters instead of Unicode box-drawing
         padding_x: Horizontal padding inside node boxes
         padding_y: Vertical padding inside node boxes
+        gap: Space between nodes (default: 4)
 
     Returns:
         Rendered diagram as a string
@@ -104,7 +106,7 @@ def render(
 
         graph = parse(text)
         from .output.text import render_text
-        return render_text(graph, use_ascii=use_ascii, padding_x=padding_x, padding_y=padding_y, rounded_edges=rounded_edges)
+        return render_text(graph, use_ascii=use_ascii, padding_x=padding_x, padding_y=padding_y, rounded_edges=rounded_edges, gap=gap)
     except Exception as exc:
         return f"[termaid] Failed to render diagram: {exc}"
 

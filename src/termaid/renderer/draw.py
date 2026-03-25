@@ -27,6 +27,7 @@ def render_graph(
     padding_x: int = 4,
     padding_y: int = 2,
     rounded_edges: bool = True,
+    gap: int = 4,
 ) -> str:
     """Render a graph to a string.
 
@@ -36,13 +37,14 @@ def render_graph(
         padding_x: Horizontal padding inside node boxes
         padding_y: Vertical padding inside node boxes
         rounded_edges: Use rounded corners on edge turns (╭╮╰╯ vs ┌┐└┘)
+        gap: Space between nodes (default: 4)
 
     Returns:
         The rendered diagram as a string
     """
     canvas = render_graph_canvas(
         graph, use_ascii=use_ascii, padding_x=padding_x, padding_y=padding_y,
-        rounded_edges=rounded_edges,
+        rounded_edges=rounded_edges, gap=gap,
     )
     if canvas is None:
         return ""
@@ -55,6 +57,7 @@ def render_graph_canvas(
     padding_x: int = 4,
     padding_y: int = 2,
     rounded_edges: bool = True,
+    gap: int = 4,
 ) -> Canvas | None:
     """Render a graph and return the Canvas (with style info).
 
@@ -77,7 +80,7 @@ def render_graph_canvas(
         graph.direction = Direction.LR
 
     # Layout
-    layout = compute_layout(graph, padding_x, padding_y)
+    layout = compute_layout(graph, padding_x, padding_y, gap)
 
     # Route edges
     routed = route_edges(graph, layout)

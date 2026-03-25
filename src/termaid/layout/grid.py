@@ -105,7 +105,8 @@ class GridLayout:
         return x + w // 2, y + h // 2
 
 
-def compute_layout(graph: Graph, padding_x: int = 4, padding_y: int = 2) -> GridLayout:
+def compute_layout(graph: Graph, padding_x: int = 4, padding_y: int = 2, gap: int = 4) -> GridLayout:
+    gap = max(gap, 1)  # minimum 1 for arrow visibility
     """Compute the grid layout for a graph."""
     layout = GridLayout()
     direction = graph.direction.normalized()
@@ -123,7 +124,7 @@ def compute_layout(graph: Graph, padding_x: int = 4, padding_y: int = 2) -> Grid
     _place_nodes(graph, layout, layer_order, direction)
 
     # Step 4: Compute column widths and row heights (with word wrapping)
-    _compute_sizes(graph, layout, padding_x, padding_y)
+    _compute_sizes(graph, layout, padding_x, padding_y, gap)
 
     # Step 4b: Normalize sizes (per-layer, capped)
     _normalize_sizes(graph, layout)
@@ -483,6 +484,7 @@ def _compute_sizes(
     layout: GridLayout,
     padding_x: int,
     padding_y: int,
+    gap: int = 4,
 ) -> None:
     """Compute column widths and row heights based on node content."""
     for nid, placement in layout.placements.items():
@@ -545,10 +547,10 @@ def _compute_sizes(
     max_row = max(all_rows) if all_rows else 0
     for c in range(max_col + 2):
         if c not in layout.col_widths:
-            layout.col_widths[c] = 4  # gap columns
+            layout.col_widths[c] = gap  # gap columns
     for r in range(max_row + 2):
         if r not in layout.row_heights:
-            layout.row_heights[r] = 3  # gap rows
+            layout.row_heights[r] = max(gap - 1, 1)  # gap rows
 
     # Expand gaps to fit edge labels
     _expand_gaps_for_edge_labels(graph, layout)
