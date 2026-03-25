@@ -8,3 +8,13 @@ build/
 .pytest_cache/
 # Scratch diagram files in root
 /*.mmd
+
+# Demo source files (tape scripts, scratch mmd) — keep only the gif
+demo/*.tape
+demo/*.mmd
+demo/.DS_Store
+
+# Other scratch files
+.coverage
+*.txt
+screenshot.png

@@ -1,6 +1,0 @@
-graph TD
-    A[Request] --> B{Authenticated?}
-    B -->|Yes| C{Authorized?}
-    B -->|No| D[401 Unauthorized]
-    C -->|Yes| E[200 OK]
-    C -->|No| F[403 Forbidden]
