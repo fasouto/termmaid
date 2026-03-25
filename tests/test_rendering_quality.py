@@ -52,7 +52,6 @@ class TestArrowBorderCollision:
         out = render(src)
         assert "├◄" not in out, f"Arrow-border collision ├◄ found:\n{out}"
 
-    @pytest.mark.xfail(reason="Bug 3: edge touches node border incorrectly")
     def test_fan_in_edge_touches_border(self):
         """Fan-in edges should not connect directly to unrelated node borders.
 
@@ -69,7 +68,6 @@ class TestArrowBorderCollision:
 class TestJunctionCharacters:
     """Bug 5: Wrong junction characters in LR branching."""
 
-    @pytest.mark.xfail(reason="Bug 5: wrong junction in LR branching")
     def test_lr_branch_no_corner_before_arrow(self):
         """LR branching edges should not have ╭► or ╯► sequences.
 

@@ -191,6 +191,11 @@ def _draw_nodes(canvas: Canvas, graph: Graph, layout: GridLayout, cs: CharSet) -
         renderer = SHAPE_RENDERERS.get(node.shape, SHAPE_RENDERERS[NodeShape.RECTANGLE])
         renderer(canvas, p.draw_x, p.draw_y, p.draw_width, p.draw_height, node.label, cs, style=style)
 
+        # Protect node cells so edge lines don't overwrite borders
+        for r in range(p.draw_y, p.draw_y + p.draw_height):
+            for c in range(p.draw_x, p.draw_x + p.draw_width):
+                canvas.protect(r, c)
+
         # Overwrite label with styled text if markdown segments exist
         if node.label_segments:
             label_row = p.draw_y + p.draw_height // 2
@@ -242,14 +247,19 @@ def _draw_edges(
             x1, y1 = re.draw_path[i]
             x2, y2 = re.draw_path[i + 1]
 
-            # Clip first segment start if arrow_start
-            if i == 0 and edge.has_arrow_start:
+            # Clip first segment start: move 1 cell away from node border
+            # (the T-junction handles the border connection)
+            if i == 0:
                 dx = 0 if x2 == x1 else (1 if x2 > x1 else -1)
                 dy = 0 if y2 == y1 else (1 if y2 > y1 else -1)
                 x1, y1 = x1 + dx, y1 + dy
+                # Clip an extra cell if there's a start arrow
+                if edge.has_arrow_start:
+                    x1, y1 = x1 + dx, y1 + dy
 
-            # Clip last segment end if arrow_end
-            if i == n_segs - 1 and edge.has_arrow_end:
+            # Clip last segment end: move 1 cell away from target border
+            # (the T-junction or arrow handles the border connection)
+            if i == n_segs - 1:
                 dx = 0 if x2 == x1 else (1 if x2 > x1 else -1)
                 dy = 0 if y2 == y1 else (1 if y2 > y1 else -1)
                 x2, y2 = x2 - dx, y2 - dy

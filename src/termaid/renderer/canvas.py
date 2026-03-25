@@ -91,6 +91,30 @@ def _build_junction_table() -> None:
         ("═", "┌", "┬"), ("═", "┐", "┬"),
         ("═", "└", "┴"), ("═", "┘", "┴"),
     ]
+    # T-junctions absorb lines they already contain.
+    # ├ has up+down+right: adding │ or ─ doesn't change it.
+    # ┤ has up+down+left: same.
+    # ┬ has left+right+down: same.
+    # ┴ has left+right+up: same.
+    for tee, contained_lines in [
+        ("├", "│─"),  # ├ already has vertical (│) and rightward (─)
+        ("┤", "│─"),  # ┤ already has vertical (│) and leftward (─)
+        ("┬", "─│"),  # ┬ already has horizontal (─) and downward (│)
+        ("┴", "─│"),  # ┴ already has horizontal (─) and upward (│)
+    ]:
+        for line in contained_lines:
+            pairs.append((tee, line, tee))
+            pairs.append((line, tee, tee))
+        # T + same T = same T
+        pairs.append((tee, tee, tee))
+
+    # Cross (┼) absorbs any single line or corner drawn over it.
+    # ┼ already represents all 4 directions, so adding another line
+    # or corner character doesn't change the visual meaning.
+    for ch in "─│╭╮╰╯┌┐└┘├┤┬┴":
+        pairs.append(("┼", ch, "┼"))
+        pairs.append((ch, "┼", "┼"))
+
     # Shape markers (◆ for diamond, ◯ for circle) are immovable:
     # any box-drawing char merging with them keeps the marker.
     _all_box = set("─│┌┐└┘├┤┬┴┼━┃╋┄┆╭╮╰╯═║╔╗╚╝")
@@ -109,7 +133,12 @@ _BOX_CHARS = set("─│┌┐└┘├┤┬┴┼━┃╋┄┆╭╮╰╯�
 
 
 class Canvas:
-    """2D character canvas with row-major indexing."""
+    """2D character canvas with row-major indexing.
+
+    Supports cell protection: cells marked as "node" won't be overwritten
+    by edge lines. Protected cells only accept junction merges that add
+    a new direction (e.g. ─ on a │ border → ├), preserving node borders.
+    """
 
     def __init__(self, width: int, height: int) -> None:
         self.width = width
@@ -119,6 +148,9 @@ class Canvas:
         ]
         self._style_grid: list[list[str]] = [
             ["default" for _ in range(width)] for _ in range(height)
+        ]
+        self._protected: list[list[bool]] = [
+            [False for _ in range(width)] for _ in range(height)
         ]
 
     def resize(self, new_width: int, new_height: int) -> None:
@@ -130,9 +162,11 @@ class Canvas:
         for r in range(self.height):
             self._grid[r].extend(" " for _ in range(new_w - self.width))
             self._style_grid[r].extend("default" for _ in range(new_w - self.width))
+            self._protected[r].extend(False for _ in range(new_w - self.width))
         for _ in range(new_h - self.height):
             self._grid.append([" " for _ in range(new_w)])
             self._style_grid.append(["default" for _ in range(new_w)])
+            self._protected.append([False for _ in range(new_w)])
         self.width = new_w
         self.height = new_h
 
@@ -141,8 +175,23 @@ class Canvas:
             return self._grid[row][col]
         return " "
 
+    def protect(self, row: int, col: int) -> None:
+        """Mark a cell as protected (node border). Protected cells only
+        accept junction merges, not plain overwrites from edge lines."""
+        if 0 <= row < self.height and 0 <= col < self.width:
+            self._protected[row][col] = True
+
+    def is_protected(self, row: int, col: int) -> bool:
+        if 0 <= row < self.height and 0 <= col < self.width:
+            return self._protected[row][col]
+        return False
+
     def put(self, row: int, col: int, ch: str, merge: bool = True, style: str = "") -> None:
-        """Place a character on the canvas, optionally merging junctions."""
+        """Place a character on the canvas, optionally merging junctions.
+
+        Protected cells (node borders) only accept junction merges that
+        produce a T-junction or cross. Plain line overwrites are blocked.
+        """
         if not (0 <= row < self.height and 0 <= col < self.width):
             return
         if ch == " ":
@@ -154,9 +203,18 @@ class Canvas:
         elif merge and existing in _BOX_CHARS and ch in _BOX_CHARS:
             merged = _JUNCTION_TABLE.get((existing, ch))
             if merged:
+                if self._protected[row][col] and merged == existing:
+                    # Protected cell unchanged by merge: skip style update
+                    return
                 self._grid[row][col] = merged
+            elif self._protected[row][col]:
+                # Protected cell: don't overwrite with unrelated character
+                return
             else:
                 self._grid[row][col] = ch
+        elif self._protected[row][col]:
+            # Protected cell: don't overwrite with non-box character
+            return
         else:
             self._grid[row][col] = ch
 
