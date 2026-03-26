@@ -157,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
         "--theme",
         default=None,
         choices=["default", "terra", "neon", "mono", "amber", "phosphor",
-                 "blueprint", "slate", "sunset", "gruvbox", "monokai"],
+                 "gruvbox", "monokai", "dracula", "nord", "solarized"],
         help="Color theme. Requires 'rich' package (pip install termaid[rich]).",
     )
     parser.add_argument(
@@ -369,11 +369,11 @@ def _list_themes() -> int:
         ("mono",      "text",  "White/gray monochrome"),
         ("amber",     "text",  "Amber/gold CRT-style"),
         ("phosphor",  "text",  "Green phosphor terminal"),
-        ("blueprint", "solid", "Deep blue backgrounds, white text"),
-        ("slate",     "solid", "Dark gray backgrounds, orange accents"),
-        ("sunset",    "solid", "Deep rose backgrounds, gold arrows"),
         ("gruvbox",   "solid", "Gruvbox dark palette"),
         ("monokai",   "solid", "Monokai dark with pink/green accents"),
+        ("dracula",   "solid", "Dracula purple/pink/green palette"),
+        ("nord",      "solid", "Nord muted blue/cyan arctic palette"),
+        ("solarized", "solid", "Solarized dark blue/yellow/cyan"),
     ]
     for name, kind, desc in themes:
         tag = f"[{kind}]"
