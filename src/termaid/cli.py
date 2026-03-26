@@ -156,7 +156,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--theme",
         default=None,
-        choices=["default", "terra", "neon", "mono", "amber", "phosphor"],
+        choices=["default", "terra", "neon", "mono", "amber", "phosphor",
+                 "blueprint", "slate", "sunset", "gruvbox", "monokai"],
         help="Color theme. Requires 'rich' package (pip install termaid[rich]).",
     )
     parser.add_argument(
@@ -181,12 +182,38 @@ def main(argv: list[str] | None = None) -> int:
         help="Show node IDs alongside labels (e.g. 'A: Start') for debugging.",
     )
     parser.add_argument(
+        "--json",
+        default=None,
+        metavar="TYPE",
+        choices=["treemap", "pie", "mindmap", "flowchart"],
+        help="Read JSON/tabular data from stdin and render as TYPE (treemap, pie, mindmap, flowchart).",
+    )
+    parser.add_argument(
+        "--themes",
+        action="store_true",
+        help="List available color themes and exit.",
+    )
+    parser.add_argument(
+        "--demo",
+        nargs="?",
+        const="all",
+        default=None,
+        metavar="TYPE",
+        help="Render sample diagrams. Use 'all' or a type name (flowchart, sequence, etc.).",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {_get_version()}",
     )
 
     args = parser.parse_args(argv)
+
+    if args.themes:
+        return _list_themes()
+
+    if args.demo is not None:
+        return _run_demo(args)
 
     # Read input
     source = _read_source(args)
@@ -197,6 +224,15 @@ def main(argv: list[str] | None = None) -> int:
     if not source:
         print("Error: Empty input.", file=sys.stderr)
         return 1
+
+    # JSON ingest: convert structured data to Mermaid syntax
+    if args.json:
+        try:
+            from .ingest import json_to_mermaid
+            source = json_to_mermaid(source, args.json)
+        except Exception as e:
+            print(f"Error converting JSON to {args.json}: {e}", file=sys.stderr)
+            return 1
 
     # TUI mode
     if args.tui:
@@ -322,6 +358,64 @@ def _apply_show_ids(source: str) -> str:
     # Insert after the first line (the graph/flowchart header)
     return lines[0] + "\n" + "\n".join(extra_lines) + "\n" + "\n".join(lines[1:])
 
+
+
+def _list_themes() -> int:
+    """List available color themes."""
+    themes = [
+        ("default",   "text",  "Cyan nodes, yellow arrows, white labels"),
+        ("terra",     "text",  "Warm earth tones (browns, oranges)"),
+        ("neon",      "text",  "Magenta nodes, green arrows, cyan edges"),
+        ("mono",      "text",  "White/gray monochrome"),
+        ("amber",     "text",  "Amber/gold CRT-style"),
+        ("phosphor",  "text",  "Green phosphor terminal"),
+        ("blueprint", "solid", "Deep blue backgrounds, white text"),
+        ("slate",     "solid", "Dark gray backgrounds, orange accents"),
+        ("sunset",    "solid", "Deep rose backgrounds, gold arrows"),
+        ("gruvbox",   "solid", "Gruvbox dark palette"),
+        ("monokai",   "solid", "Monokai dark with pink/green accents"),
+    ]
+    for name, kind, desc in themes:
+        tag = f"[{kind}]"
+        print(f"  {name:12s} {tag:8s} {desc}")
+    return 0
+
+
+_DEMO_SOURCES = {
+    "flowchart": ("Flowchart", "graph TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[Process]\n  B -->|No| D[End]\n  C --> D"),
+    "sequence": ("Sequence diagram", "sequenceDiagram\n  Client->>Server: GET /api\n  Server->>DB: SELECT\n  DB-->>Server: rows\n  Server-->>Client: 200 JSON"),
+    "class": ("Class diagram", "classDiagram\n  class Animal {\n    +String name\n    +makeSound()\n  }\n  class Dog {\n    +fetch()\n  }\n  Animal <|-- Dog"),
+    "er": ("ER diagram", "erDiagram\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ ITEM : contains"),
+    "state": ("State diagram", "stateDiagram-v2\n  [*] --> Idle\n  Idle --> Running : start\n  Running --> Done : complete\n  Done --> [*]"),
+    "block": ("Block diagram", "block-beta\n  columns 3\n  Frontend API Database"),
+    "git": ("Git graph", "gitGraph\n  commit\n  branch develop\n  commit\n  commit\n  checkout main\n  merge develop\n  commit"),
+    "pie": ("Pie chart", 'pie title Languages\n  "Python" : 45\n  "Go" : 30\n  "Rust" : 25'),
+    "treemap": ("Treemap", 'treemap-beta\n  "Backend"\n    "API": 35\n    "Auth": 15\n  "Frontend"\n    "React": 30\n    "CSS": 10'),
+    "mindmap": ("Mindmap", "mindmap\n  Project\n    Design\n      Wireframes\n      Mockups\n    Development\n      Frontend\n      Backend\n    Testing"),
+}
+
+
+def _run_demo(args: argparse.Namespace) -> int:
+    """Render sample diagrams."""
+    from termaid import render
+
+    demo_type = args.demo.lower()
+    if demo_type == "all":
+        keys = list(_DEMO_SOURCES.keys())
+    elif demo_type in _DEMO_SOURCES:
+        keys = [demo_type]
+    else:
+        print(f"Unknown demo type: {demo_type}", file=sys.stderr)
+        print(f"Available: all, {', '.join(_DEMO_SOURCES.keys())}", file=sys.stderr)
+        return 1
+
+    for key in keys:
+        title, source = _DEMO_SOURCES[key]
+        print(f"=== {title} ===")
+        print(render(source))
+        print()
+
+    return 0
 
 
 if __name__ == "__main__":

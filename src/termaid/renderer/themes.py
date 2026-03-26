@@ -16,6 +16,11 @@ class Theme:
     edge_label: str
     subgraph_label: str
     default: str = ""
+    # Solid-background themes fill regions with bg colors
+    is_solid: bool = False
+    bg_default: str = ""     # overall background
+    bg_node: str = ""        # node box fill
+    bg_subgraph: str = ""    # subgraph region fill
 
 
 THEMES: dict[str, Theme] = {
@@ -78,6 +83,76 @@ THEMES: dict[str, Theme] = {
         label="#AAFFAA",
         edge_label="italic #339933",
         subgraph_label="bold #55DD55",
+    ),
+    "blueprint": Theme(
+        name="blueprint",
+        node="#90CAF9",
+        edge="#5C6BC0",
+        arrow="bold #E3F2FD",
+        subgraph="#7986CB",
+        label="bold #FFFFFF",
+        edge_label="italic #B3E5FC",
+        subgraph_label="bold #E8EAF6",
+        is_solid=True,
+        bg_default="on #1A237E",
+        bg_node="on #283593",
+        bg_subgraph="on #1E2A78",
+    ),
+    "slate": Theme(
+        name="slate",
+        node="#CFD8DC",
+        edge="#78909C",
+        arrow="bold #FF8A65",
+        subgraph="#90A4AE",
+        label="bold #ECEFF1",
+        edge_label="italic #B0BEC5",
+        subgraph_label="bold #B0BEC5",
+        is_solid=True,
+        bg_default="on #263238",
+        bg_node="on #37474F",
+        bg_subgraph="on #2E3B42",
+    ),
+    "sunset": Theme(
+        name="sunset",
+        node="#F48FB1",
+        edge="#CE93D8",
+        arrow="bold #FFD54F",
+        subgraph="#F06292",
+        label="bold #FCE4EC",
+        edge_label="italic #F8BBD0",
+        subgraph_label="bold #F8BBD0",
+        is_solid=True,
+        bg_default="on #880E4F",
+        bg_node="on #AD1457",
+        bg_subgraph="on #9C1458",
+    ),
+    "gruvbox": Theme(
+        name="gruvbox",
+        node="#FABD2F",
+        edge="#8EC07C",
+        arrow="bold #FE8019",
+        subgraph="#B8BB26",
+        label="bold #EBDBB2",
+        edge_label="italic #D5C4A1",
+        subgraph_label="bold #D5C4A1",
+        is_solid=True,
+        bg_default="on #282828",
+        bg_node="on #3C3836",
+        bg_subgraph="on #32302F",
+    ),
+    "monokai": Theme(
+        name="monokai",
+        node="#F92672",
+        edge="#66D9EF",
+        arrow="bold #A6E22E",
+        subgraph="#AE81FF",
+        label="bold #F8F8F2",
+        edge_label="italic #E6DB74",
+        subgraph_label="bold #AE81FF",
+        is_solid=True,
+        bg_default="on #272822",
+        bg_node="on #3E3D32",
+        bg_subgraph="on #333328",
     ),
 }
 

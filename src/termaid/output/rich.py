@@ -135,6 +135,9 @@ def render_rich(
     plain = "\n".join(lines)
     text = Text(plain)
 
+    # For solid themes, apply background to all cells (including spaces)
+    is_solid = th.is_solid
+
     # Apply styles character by character
     pos = 0
     for row_idx, row in enumerate(styled_pairs):
@@ -144,8 +147,23 @@ def render_rich(
         for col_idx, (ch, style_key) in enumerate(row):
             if col_idx >= len(line):
                 break
-            if ch != " " and style_key in style_map and style_map[style_key]:
-                text.stylize(style_map[style_key], pos + col_idx, pos + col_idx + 1)
+            if is_solid:
+                # Solid themes: apply bg to every cell, fg to non-space cells
+                bg = ""
+                if style_key in ("node", "label", "bold_label", "italic_label") or style_key.startswith("nodestyle:") or style_key.startswith("class:"):
+                    bg = th.bg_node
+                elif style_key in ("subgraph", "subgraph_label"):
+                    bg = th.bg_subgraph
+                else:
+                    bg = th.bg_default
+                fg = style_map.get(style_key, "") if ch != " " else ""
+                style_str = f"{fg} {bg}".strip() if fg else bg
+                if style_str:
+                    text.stylize(style_str, pos + col_idx, pos + col_idx + 1)
+            else:
+                # Text themes: only style non-space characters
+                if ch != " " and style_key in style_map and style_map[style_key]:
+                    text.stylize(style_map[style_key], pos + col_idx, pos + col_idx + 1)
         pos += len(line) + 1  # +1 for newline
 
     return text
@@ -187,6 +205,8 @@ def render_sequence_rich(
     plain = "\n".join(lines)
     text = Text(plain)
 
+    is_solid = th.is_solid
+
     pos = 0
     for row_idx, row in enumerate(styled_pairs):
         if row_idx >= len(lines):
@@ -195,8 +215,15 @@ def render_sequence_rich(
         for col_idx, (ch, style_key) in enumerate(row):
             if col_idx >= len(line):
                 break
-            if ch != " " and style_key in style_map and style_map[style_key]:
-                text.stylize(style_map[style_key], pos + col_idx, pos + col_idx + 1)
+            if is_solid:
+                bg = th.bg_node if style_key in ("node", "label") else th.bg_default
+                fg = style_map.get(style_key, "") if ch != " " else ""
+                style_str = f"{fg} {bg}".strip() if fg else bg
+                if style_str:
+                    text.stylize(style_str, pos + col_idx, pos + col_idx + 1)
+            else:
+                if ch != " " and style_key in style_map and style_map[style_key]:
+                    text.stylize(style_map[style_key], pos + col_idx, pos + col_idx + 1)
         pos += len(line) + 1
 
     return text
