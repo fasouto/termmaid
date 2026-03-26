@@ -54,12 +54,19 @@ def _sort_branches(diagram: GitGraph) -> list[str]:
     return [name for _, _, name in ordered]
 
 
-def _commit_footprint(c: Commit) -> int:
-    """Return the half-width of the widest label (id or tag) for a commit."""
+def _commit_footprint(c: Commit, use_ascii: bool = False) -> int:
+    """Return the half-width of the widest label (id or tag) for a commit.
+
+    Accounts for the commit marker's display width so that adjacent
+    markers don't overlap in CJK mode where ● is 2 columns.
+    """
     w = display_width(c.id)
     if c.tag:
         w = max(w, display_width(c.tag) + 2)  # "[tag]"
-    return (w + 1) // 2  # ceil half
+    # Ensure the footprint is at least half the marker's display width
+    marker = _get_marker(c.type, use_ascii)
+    mw = char_width(marker)
+    return max((w + 1) // 2, (mw + 1) // 2)
 
 
 def _compute_branch_extents_lr(
@@ -129,21 +136,23 @@ def _compute_layout_lr(
 
     if commits:
         # First commit: place at left_offset + its own half-width
-        fp0 = _commit_footprint(commits[0])
+        fp0 = _commit_footprint(commits[0], use_ascii)
         commit_col[commits[0].id] = left_offset + fp0
 
         for i in range(1, len(commits)):
             prev = commits[i - 1]
             curr = commits[i]
-            prev_fp = _commit_footprint(prev)
-            curr_fp = _commit_footprint(curr)
-            # Minimum gap so labels don't overlap
-            label_gap = prev_fp + _LABEL_PAD + curr_fp
-            gap = max(_MIN_COMMIT_GAP, label_gap)
+            prev_fp = _commit_footprint(prev, use_ascii)
+            curr_fp = _commit_footprint(curr, use_ascii)
+            # Minimum gap so labels don't overlap.
+            # Account for wide commit markers (CJK mode: ● = 2 cols)
+            marker_extra = char_width(_get_marker("NORMAL", use_ascii)) - 1
+            label_gap = prev_fp + _LABEL_PAD + curr_fp + marker_extra
+            gap = max(_MIN_COMMIT_GAP + marker_extra, label_gap)
             commit_col[curr.id] = commit_col[prev.id] + gap
 
     last_col = max(commit_col.values(), default=left_offset)
-    last_fp = _commit_footprint(commits[-1]) if commits else 0
+    last_fp = _commit_footprint(commits[-1], use_ascii) if commits else 0
     canvas_width = last_col + last_fp + _MARGIN + 1
     canvas_height = _MARGIN + len(sorted_branches) * row_height + _MARGIN
 
