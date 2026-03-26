@@ -8,6 +8,7 @@ from __future__ import annotations
 from ..model.piechart import PieChart
 from .canvas import Canvas
 from .charset import ASCII, UNICODE, CharSet
+from .textwidth import display_width
 
 _FILL_CHARS = ["█", "▓", "░", "▒", "▞", "▚", "▖", "▗"]
 _FILL_CHARS_ASCII = ["#", "*", "+", "~", ":", ".", "o", "="]
@@ -31,7 +32,7 @@ def render_pie_chart(
     fills = _FILL_CHARS_ASCII if use_ascii else _FILL_CHARS
 
     # Compute label column width
-    max_label_len = max(len(s.label) for s in diagram.slices)
+    max_label_len = max(display_width(s.label) for s in diagram.slices)
     label_col_w = max_label_len + _MARGIN
 
     # Compute suffix (percentage + optional value)
@@ -42,7 +43,7 @@ def render_pie_chart(
             suffixes.append(f" {pct:5.1f}%  [{s.value:g}]")
         else:
             suffixes.append(f" {pct:5.1f}%")
-    max_suffix_len = max(len(sf) for sf in suffixes)
+    max_suffix_len = max(display_width(sf) for sf in suffixes)
 
     bar_left = label_col_w
     canvas_w = bar_left + _BAR_WIDTH + max_suffix_len + _MARGIN
@@ -55,7 +56,7 @@ def render_pie_chart(
 
     # Title
     if diagram.title:
-        title_col = max(0, (canvas_w - len(diagram.title)) // 2)
+        title_col = max(0, (canvas_w - display_width(diagram.title)) // 2)
         canvas.put_text(_MARGIN, title_col, diagram.title, style="label")
 
     # ── Per-slice bars ────────────────────────────────────────────────────
@@ -65,8 +66,9 @@ def render_pie_chart(
         fill = fills[i % len(fills)]
         bar_len = max(1, round(s.value / total * _BAR_WIDTH))
 
-        # Label (right-aligned)
-        label_text = s.label.rjust(max_label_len)
+        # Label (right-aligned by display width)
+        pad = max_label_len - display_width(s.label)
+        label_text = " " * pad + s.label
         canvas.put_text(row, _MARGIN, label_text, style="label")
 
         # Bar

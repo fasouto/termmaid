@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 from ..model.mindmap import Mindmap, MindmapNode
 from .canvas import Canvas
+from .textwidth import display_ljust, display_rjust, display_width
 
 # When root has more children than this, spill some to the left
 _OVERFLOW_THRESHOLD = 6
@@ -75,7 +76,7 @@ def render_mindmap(
         else:
             lines = _render_both_sides(root.label, left_children, right_children, ch)
 
-    width = max((len(line) for line in lines), default=1)
+    width = max((display_width(line) for line in lines), default=1)
     height = len(lines)
     canvas = Canvas(width + 1, height)
     for r, line in enumerate(lines):
@@ -109,7 +110,7 @@ def _render_subtree_right(node: MindmapNode, ch: _Chars) -> tuple[list[str], int
     child_block, child_conn = _stack_right(node.children, ch)
 
     connector = node.label + " " + ch.h + ch.h
-    pad = " " * len(connector)
+    pad = " " * display_width(connector)
     result: list[str] = []
     for i, line in enumerate(child_block):
         if i == child_conn:
@@ -183,11 +184,11 @@ def _render_subtree_left(node: MindmapNode, ch: _Chars) -> tuple[list[str], int]
         return [node.label], 0
 
     child_block, child_conn = _stack_left(node.children, ch)
-    child_width = max(len(line) for line in child_block)
-    child_block = [line.rjust(child_width) for line in child_block]
+    child_width = max(display_width(line) for line in child_block)
+    child_block = [display_rjust(line, child_width) for line in child_block]
 
     connector = ch.h + ch.h + " " + node.label
-    pad = " " * len(connector)
+    pad = " " * display_width(connector)
     result: list[str] = []
     for i, line in enumerate(child_block):
         if i == child_conn:
@@ -201,20 +202,20 @@ def _stack_left(children: list[MindmapNode], ch: _Chars) -> tuple[list[str], int
     """Stack child subtrees with branch chars on the right (mirrored)."""
     if len(children) == 1:
         sub, sc = _render_subtree_left(children[0], ch)
-        w = max(len(line) for line in sub)
+        w = max(display_width(line) for line in sub)
         result = []
         for i, line in enumerate(sub):
             if i == sc:
-                result.append(line.rjust(w) + " " + ch.h + ch.h)
+                result.append(display_rjust(line, w) + " " + ch.h + ch.h)
             else:
-                result.append(line.rjust(w) + "   ")
+                result.append(display_rjust(line, w) + "   ")
         return result, sc
 
     blocks: list[tuple[list[str], int]] = []
     for child in children:
         blocks.append(_render_subtree_left(child, ch))
 
-    max_w = max(max(len(line) for line in block) for block, _ in blocks)
+    max_w = max(max(display_width(line) for line in block) for block, _ in blocks)
     result: list[str] = []
     conn_rows: list[int] = []
 
@@ -224,7 +225,7 @@ def _stack_left(children: list[MindmapNode], ch: _Chars) -> tuple[list[str], int
         base = len(result)
 
         for li, line in enumerate(block):
-            padded = line.rjust(max_w)
+            padded = display_rjust(line, max_w)
             if li == bc:
                 conn_rows.append(base + li)
                 if is_first:
@@ -270,7 +271,7 @@ def _render_both_sides(
     right_block, _ = _stack_right(right_children, ch)
     left_block, _ = _stack_left(left_children, ch)
 
-    left_width = max((len(line) for line in left_block), default=0)
+    left_width = max((display_width(line) for line in left_block), default=0)
     rh = len(right_block)
     lh = len(left_block)
     total = max(rh, lh)
@@ -280,12 +281,12 @@ def _render_both_sides(
     root_row = total // 2
 
     root_part = ch.h + ch.h + " " + root_label + " " + ch.h + ch.h
-    pad = " " * len(root_part)
+    pad = " " * display_width(root_part)
 
     result: list[str] = []
     for row in range(total):
         li = row - l_off
-        left = left_block[li].ljust(left_width) if 0 <= li < lh else " " * left_width
+        left = display_ljust(left_block[li], left_width) if 0 <= li < lh else " " * left_width
         ri = row - r_off
         right = right_block[ri] if 0 <= ri < rh else ""
         center = root_part if row == root_row else pad

@@ -8,6 +8,7 @@ and the correct junction character is derived from the combined directions.
 from __future__ import annotations
 
 from .charset import CharSet, UNICODE
+from .textwidth import char_width
 
 
 # Direction bitfield constants
@@ -40,6 +41,12 @@ _DIRECTION_TO_CHAR: dict[int, str] = {
 # Reverse mapping: infer direction bitfield from a box-drawing character.
 # Used when callers place box chars without explicit direction info
 # (e.g. node borders, subgraph borders, shape renderers).
+# Sentinel for the second cell of a wide (2-column) character.
+# When a character with display width 2 is placed at column *c*, the cell
+# at column *c+1* is set to this value so that ``to_string`` skips it and
+# the terminal columns stay aligned.
+_WIDE_CONT = ""
+
 _CHAR_TO_DIRECTIONS: dict[str, int] = {
     # Standard single-line
     "─": LEFT | RIGHT,
@@ -148,20 +155,35 @@ class Canvas:
 
         Protected cells (node borders) only accept merges that add new
         directions. Plain overwrites are blocked.
+
+        Wide characters (CJK etc.) automatically claim the next column by
+        placing a ``_WIDE_CONT`` sentinel at ``col + 1``.
         """
         if not (0 <= row < self.height and 0 <= col < self.width):
             return
         if ch == " ":
             return
 
+        # -- Wide-character bookkeeping (before placement) --
+        existing = self._grid[row][col]
+
+        # If we are overwriting a continuation cell, break the parent wide char
+        if existing == _WIDE_CONT and col > 0:
+            self._grid[row][col - 1] = " "
+            self._directions[row][col - 1] = 0
+
+        # If the existing cell is itself wide, clear its continuation
+        if existing != _WIDE_CONT and existing != " " and col + 1 < self.width:
+            if self._grid[row][col + 1] == _WIDE_CONT:
+                self._grid[row][col + 1] = " "
+                self._directions[row][col + 1] = 0
+
         # Infer directions from the character if not otherwise known
         new_dirs = _CHAR_TO_DIRECTIONS.get(ch, 0)
-
-        existing = self._grid[row][col]
         existing_dirs = self._directions[row][col]
 
-        if existing == " ":
-            # Empty cell: just place
+        if existing == " " or existing == _WIDE_CONT:
+            # Empty / continuation cell: just place
             self._grid[row][col] = ch
             self._directions[row][col] = new_dirs
         elif merge and existing_dirs and new_dirs:
@@ -190,10 +212,30 @@ class Canvas:
         if style:
             self._style_grid[row][col] = style
 
+        # -- Wide-character bookkeeping (after placement) --
+        if char_width(ch) == 2 and col + 1 < self.width:
+            # Claim the next column as a continuation of this wide char.
+            # If that cell is itself a wide char, clear *its* continuation first.
+            next_ch = self._grid[row][col + 1]
+            if next_ch != _WIDE_CONT and next_ch != " " and col + 2 < self.width:
+                if self._grid[row][col + 2] == _WIDE_CONT:
+                    self._grid[row][col + 2] = " "
+                    self._directions[row][col + 2] = 0
+            self._grid[row][col + 1] = _WIDE_CONT
+            self._style_grid[row][col + 1] = style if style else self._style_grid[row][col + 1]
+            self._directions[row][col + 1] = 0
+            self._protected[row][col + 1] = self._protected[row][col]
+
     def put_text(self, row: int, col: int, text: str, style: str = "") -> None:
-        """Place a string of characters starting at (row, col)."""
-        for i, ch in enumerate(text):
-            self.put(row, col + i, ch, merge=False, style=style)
+        """Place a string of characters starting at (row, col).
+
+        Advances by the display width of each character so that wide
+        (CJK / full-width) characters correctly occupy two columns.
+        """
+        offset = 0
+        for ch in text:
+            self.put(row, col + offset, ch, merge=False, style=style)
+            offset += char_width(ch)
 
     def put_styled_text(self, row: int, col: int, segments: list[tuple[str, str]]) -> None:
         """Place text with per-segment style keys. Each segment is (text, style_key)."""
@@ -201,7 +243,7 @@ class Canvas:
         for text, style in segments:
             for ch in text:
                 self.put(row, col + offset, ch, merge=False, style=style)
-                offset += 1
+                offset += char_width(ch)
 
     def get_style(self, row: int, col: int) -> str:
         """Get the style key at a position."""
@@ -210,12 +252,18 @@ class Canvas:
         return "default"
 
     def to_styled_pairs(self) -> list[list[tuple[str, str]]]:
-        """Return (char, style_key) pairs for each cell."""
+        """Return (char, style_key) pairs for each cell.
+
+        Continuation cells from wide characters are skipped.
+        """
         result: list[list[tuple[str, str]]] = []
         for r in range(self.height):
             row_pairs: list[tuple[str, str]] = []
             for c in range(self.width):
-                row_pairs.append((self._grid[r][c], self._style_grid[r][c]))
+                ch = self._grid[r][c]
+                if ch == _WIDE_CONT:
+                    continue
+                row_pairs.append((ch, self._style_grid[r][c]))
             result.append(row_pairs)
         return result
 
@@ -232,10 +280,15 @@ class Canvas:
             self.put(r, col, ch, style=style)
 
     def to_string(self) -> str:
-        """Convert canvas to a string, trimming trailing whitespace per line."""
+        """Convert canvas to a string, trimming trailing whitespace per line.
+
+        Continuation cells (``_WIDE_CONT``) left by wide characters are
+        skipped so that the terminal renders each wide glyph in exactly
+        two columns.
+        """
         lines: list[str] = []
         for row in self._grid:
-            line = "".join(row).rstrip()
+            line = "".join(ch for ch in row if ch != _WIDE_CONT).rstrip()
             lines.append(line)
         # Remove trailing empty lines
         while lines and not lines[-1]:
@@ -277,6 +330,7 @@ class Canvas:
             self._grid[r].reverse()
             self._style_grid[r].reverse()
             self._directions[r].reverse()
+            self._protected[r].reverse()
         _flip_map = {
             "┌": "┐", "┐": "┌", "└": "┘", "┘": "└",
             "├": "┤", "┤": "├", "┬": "┬", "┴": "┴",
@@ -286,10 +340,28 @@ class Canvas:
             "╔": "╗", "╗": "╔", "╚": "╝", "╝": "╚",
         }
         for r in range(self.height):
+            # Fix wide-char continuations: after reverse, CONT is before its
+            # parent wide char.  Swap them so CONT follows its parent again.
+            row = self._grid[r]
+            c = 0
+            while c < self.width:
+                if row[c] == _WIDE_CONT and c + 1 < self.width and char_width(row[c + 1]) == 2:
+                    # Swap continuation to come after the wide char
+                    row[c], row[c + 1] = row[c + 1], row[c]
+                    self._style_grid[r][c], self._style_grid[r][c + 1] = (
+                        self._style_grid[r][c + 1], self._style_grid[r][c]
+                    )
+                    self._protected[r][c], self._protected[r][c + 1] = (
+                        self._protected[r][c + 1], self._protected[r][c]
+                    )
+                    c += 2  # skip past the pair
+                else:
+                    c += 1
+
             for c in range(self.width):
-                ch = self._grid[r][c]
+                ch = row[c]
                 if ch in _flip_map:
-                    self._grid[r][c] = _flip_map[ch]
+                    row[c] = _flip_map[ch]
                 # Flip direction bits: LEFT <-> RIGHT
                 d = self._directions[r][c]
                 if d:
