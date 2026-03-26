@@ -186,10 +186,10 @@ def render_sequence_rich(
     th = get_theme(theme)
 
     # Section background colors for kanban columns, timeline sections, quadrant regions.
-    # Very muted dark tones so white text stays readable.
+    # Dark but distinguishable tones with enough saturation to tell apart.
     _SECTION_BG = [
-        "on #1A2A33", "on #2D1A22", "on #1A2D1F", "on #2D2A1A",
-        "on #231A2D", "on #1A2D2D", "on #2D221A", "on #1A222D",
+        "on #1E3A4F", "on #4A1E2E", "on #1E4A2E", "on #4A441E",
+        "on #371E4A", "on #1E4A4A", "on #4A351E", "on #1E2E4A",
     ]
 
     style_map = {
