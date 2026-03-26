@@ -35,7 +35,7 @@ def render_timeline(
     section_marker = "=" if use_ascii else "═"
 
     for si, section in enumerate(diagram.sections):
-        style = f"section:{si}"
+        style = f"sectionfg:{si}"
 
         # Section header
         if section.title:

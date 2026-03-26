@@ -148,23 +148,29 @@ def render_rich(
             if col_idx >= len(line):
                 break
             if is_solid:
-                # Solid themes: apply bg to every cell, fg to non-space cells
-                bg = ""
-                if style_key in ("node", "label", "bold_label", "italic_label") or style_key.startswith("nodestyle:") or style_key.startswith("class:"):
-                    bg = th.bg_node
-                elif style_key in ("subgraph", "subgraph_label"):
-                    bg = th.bg_subgraph
+                # Solid themes: apply bg to every cell, fg to non-space cells.
+                # sectionfg: styles are foreground-only (no bg fill).
+                if style_key.startswith("sectionfg:"):
+                    fg = style_map.get(style_key, "") if ch != " " else ""
+                    style_str = fg
                 else:
-                    bg = th.bg_default
-                fg = style_map.get(style_key, "") if ch != " " else ""
-                style_str = f"{fg} {bg}".strip() if fg else bg
+                    bg = ""
+                    if style_key in ("node", "label", "bold_label", "italic_label") or style_key.startswith("nodestyle:") or style_key.startswith("class:"):
+                        bg = th.bg_node
+                    elif style_key in ("subgraph", "subgraph_label"):
+                        bg = th.bg_subgraph
+                    else:
+                        bg = th.bg_default
+                    fg = style_map.get(style_key, "") if ch != " " else ""
+                    style_str = f"{fg} {bg}".strip() if fg else bg
                 if style_str:
                     text.stylize(style_str, pos + col_idx, pos + col_idx + 1)
             else:
                 # Text themes: only style non-space characters
                 if style_key in style_map and style_map[style_key]:
                     if ch != " " or style_key.startswith("section:"):
-                        text.stylize(style_map[style_key], pos + col_idx, pos + col_idx + 1)
+                        if style_key in style_map:
+                            text.stylize(style_map[style_key], pos + col_idx, pos + col_idx + 1)
         pos += len(line) + 1  # +1 for newline
 
     return text
@@ -185,12 +191,8 @@ def render_sequence_rich(
 
     th = get_theme(theme)
 
-    # Section background colors for kanban columns, timeline sections, quadrant regions.
-    # Dark but distinguishable tones with enough saturation to tell apart.
-    _SECTION_BG = [
-        "on #1E3A4F", "on #4A1E2E", "on #1E4A2E", "on #4A441E",
-        "on #371E4A", "on #1E4A4A", "on #4A351E", "on #1E2E4A",
-    ]
+    # Section background colors from the theme's palette
+    _section_colors = th.section_colors
 
     style_map = {
         "node": th.node,
@@ -201,9 +203,19 @@ def render_sequence_rich(
         "default": th.default,
     }
 
-    # Add section styles: white text on colored backgrounds
-    for i in range(len(_SECTION_BG)):
-        style_map[f"section:{i}"] = f"bold white {_SECTION_BG[i % len(_SECTION_BG)]}"
+    # Add section styles: white text on colored backgrounds.
+    # "section:N" is the base (column bg), "section:N:deep" is lighter (card bg).
+    for i in range(len(_section_colors)):
+        base_hex = _section_colors[i % len(_section_colors)]
+        style_map[f"section:{i}"] = f"bold white on {base_hex}"
+        # Lighten by adding 30 to each RGB component for cards
+        r, g, b = int(base_hex[1:3], 16), int(base_hex[3:5], 16), int(base_hex[5:7], 16)
+        lr, lg, lb = min(255, r + 30), min(255, g + 30), min(255, b + 30)
+        light_hex = f"#{lr:02X}{lg:02X}{lb:02X}"
+        style_map[f"section:{i}:deep"] = f"bold white on {light_hex}"
+        # Foreground-only variant (for timeline): bright version of the base color
+        fr, fg_, fb = min(255, r * 3), min(255, g * 3), min(255, b * 3)
+        style_map[f"sectionfg:{i}"] = f"bold #{fr:02X}{fg_:02X}{fb:02X}"
 
     styled_pairs = canvas.to_styled_pairs()
 
@@ -211,7 +223,7 @@ def render_sequence_rich(
     # backgrounds (so the colored bg fills the full width).
     lines: list[str] = []
     for row in styled_pairs:
-        has_section = any(s.startswith("section:") for _, s in row)
+        has_section = any(s.startswith("section:") for _, s in row if s != "default")
         raw = "".join(ch for ch, _ in row)
         lines.append(raw if has_section else raw.rstrip())
 
@@ -232,16 +244,21 @@ def render_sequence_rich(
             if col_idx >= len(line):
                 break
             if is_solid:
-                if style_key.startswith("section:"):
-                    style_str = style_map.get(style_key, th.bg_default)
+                if style_key.startswith("sectionfg:"):
+                    # Foreground-only section (timeline)
+                    fg = style_map.get(style_key, "") if ch != " " else ""
+                    style_str = fg
+                elif style_key.startswith("section:"):
+                    # Background-filled section (kanban, quadrant)
+                    style_str = style_map.get(style_key, style_map.get(style_key.split(":deep")[0], th.bg_default))
                 elif style_key in ("node", "label"):
                     bg = th.bg_node
                     fg = style_map.get(style_key, "") if ch != " " else ""
                     style_str = f"{fg} {bg}".strip() if fg else bg
                 else:
-                    bg = th.bg_default
+                    # Only apply bg to non-space chars; leave spaces transparent
                     fg = style_map.get(style_key, "") if ch != " " else ""
-                    style_str = f"{fg} {bg}".strip() if fg else bg
+                    style_str = fg
                 if style_str:
                     text.stylize(style_str, pos + col_idx, pos + col_idx + 1)
             else:

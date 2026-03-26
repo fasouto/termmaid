@@ -79,6 +79,12 @@ def _draw_column(
     hz = "-" if use_ascii else "─"
     vt = "|" if use_ascii else "│"
 
+    # Fill entire column interior with section bg (for solid themes)
+    card_style = section_style + ":deep"
+    for r in range(y + 1, y + h - 1):
+        for c in range(x + 1, x + w - 1):
+            canvas._style_grid[r][c] = section_style
+
     # Column border
     canvas.put_text(y, x, tl + hz * (w - 2) + tr, style=section_style)
     canvas.put_text(y + h - 1, x, bl + hz * (w - 2) + br, style=section_style)
@@ -110,11 +116,15 @@ def _draw_column(
         cw = w - 2 * _COL_PAD
         cx = x + _COL_PAD
 
-        # Card box (inherits column section color)
-        canvas.put_text(card_y, cx, card_tl + card_hz * (cw - 2) + card_tr, style=section_style)
-        canvas.put(card_y + 1, cx, card_vt, merge=False, style=section_style)
-        canvas.put(card_y + 1, cx + cw - 1, card_vt, merge=False, style=section_style)
-        canvas.put_text(card_y + 2, cx, card_bl + card_hz * (cw - 2) + card_br, style=section_style)
+        # Card box (lighter shade of column color)
+        canvas.put_text(card_y, cx, card_tl + card_hz * (cw - 2) + card_tr, style=card_style)
+        canvas.put(card_y + 1, cx, card_vt, merge=False, style=card_style)
+        canvas.put(card_y + 1, cx + cw - 1, card_vt, merge=False, style=card_style)
+        canvas.put_text(card_y + 2, cx, card_bl + card_hz * (cw - 2) + card_br, style=card_style)
+
+        # Card interior bg
+        for c in range(cx + 1, cx + cw - 1):
+            canvas._style_grid[card_y + 1][c] = card_style
 
         # Card content
         text = card.title
@@ -122,6 +132,6 @@ def _draw_column(
             text += " " + card.metadata
         if len(text) > cw - 2:
             text = text[:cw - 3] + "."
-        canvas.put_text(card_y + 1, cx + 1, text, style="label")
+        canvas.put_text(card_y + 1, cx + 1, text, style=card_style)
 
         card_y += 3 + _CARD_GAP

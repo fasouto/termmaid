@@ -21,6 +21,12 @@ class Theme:
     bg_default: str = ""     # overall background
     bg_node: str = ""        # node box fill
     bg_subgraph: str = ""    # subgraph region fill
+    # Per-section region colors (kanban columns, quadrant regions, timeline sections).
+    # First 4 must be visually distinct for quadrant charts: blue, red, green, amber.
+    section_colors: tuple[str, ...] = (
+        "#14385C", "#5C1424", "#145C28", "#5C4814",
+        "#3C145C", "#145C50", "#5C2814", "#28145C",
+    )
 
 
 THEMES: dict[str, Theme] = {
@@ -33,6 +39,7 @@ THEMES: dict[str, Theme] = {
         label="bold white",
         edge_label="italic dim",
         subgraph_label="bold cyan",
+        section_colors=("#14385C", "#5C1424", "#145C28", "#5C4814", "#3C145C", "#145C50", "#5C2814", "#28145C"),
     ),
     "terra": Theme(
         name="terra",
@@ -43,6 +50,7 @@ THEMES: dict[str, Theme] = {
         label="#F5E6D3",
         edge_label="italic #B89A7A",
         subgraph_label="bold #E8A87C",
+        section_colors=("#502010", "#104820", "#504008", "#0E2850", "#401038", "#084840", "#503008", "#201050"),
     ),
     "neon": Theme(
         name="neon",
@@ -53,6 +61,7 @@ THEMES: dict[str, Theme] = {
         label="bold white",
         edge_label="italic cyan",
         subgraph_label="bold cyan",
+        section_colors=("#0A1050", "#500A18", "#0A500A", "#50400A", "#400A50", "#0A5040", "#502A0A", "#1A0A50"),
     ),
     "mono": Theme(
         name="mono",
@@ -63,6 +72,7 @@ THEMES: dict[str, Theme] = {
         label="white",
         edge_label="italic dim",
         subgraph_label="bold white",
+        section_colors=("#1A1A1A", "#303030", "#242424", "#383838", "#202020", "#343434", "#282828", "#2C2C2C"),
     ),
     "amber": Theme(
         name="amber",
@@ -73,6 +83,7 @@ THEMES: dict[str, Theme] = {
         label="#FFD580",
         edge_label="italic #B08030",
         subgraph_label="bold #FFC040",
+        section_colors=("#50300A", "#0A2850", "#285008", "#500A28", "#280A50", "#0A5038", "#502008", "#0A1050"),
     ),
     "phosphor": Theme(
         name="phosphor",
@@ -83,6 +94,7 @@ THEMES: dict[str, Theme] = {
         label="#AAFFAA",
         edge_label="italic #339933",
         subgraph_label="bold #55DD55",
+        section_colors=("#083008", "#0A4808", "#081850", "#484808", "#081850", "#084830", "#480808", "#180850"),
     ),
     "gruvbox": Theme(
         name="gruvbox",
@@ -97,6 +109,7 @@ THEMES: dict[str, Theme] = {
         bg_default="on #282828",
         bg_node="on #3C3836",
         bg_subgraph="on #32302F",
+        section_colors=("#502010", "#085020", "#504008", "#082850", "#48082A", "#085048", "#502808", "#180850"),
     ),
     "monokai": Theme(
         name="monokai",
@@ -111,6 +124,7 @@ THEMES: dict[str, Theme] = {
         bg_default="on #272822",
         bg_node="on #3E3D32",
         bg_subgraph="on #333328",
+        section_colors=("#50102A", "#085040", "#405008", "#380850", "#085038", "#502A08", "#081850", "#501010"),
     ),
     "dracula": Theme(
         name="dracula",
@@ -125,6 +139,7 @@ THEMES: dict[str, Theme] = {
         bg_default="on #282A36",
         bg_node="on #44475A",
         bg_subgraph="on #383A4A",
+        section_colors=("#2A1040", "#0E4028", "#40380A", "#102A40", "#3C0A24", "#0A403A", "#402010", "#1A1040"),
     ),
     "nord": Theme(
         name="nord",
@@ -139,6 +154,7 @@ THEMES: dict[str, Theme] = {
         bg_default="on #2E3440",
         bg_node="on #3B4252",
         bg_subgraph="on #343C4A",
+        section_colors=("#143858", "#0A5830", "#501848", "#584810", "#48100A", "#581020", "#2A5010", "#381058"),
     ),
     "solarized": Theme(
         name="solarized",
@@ -153,6 +169,7 @@ THEMES: dict[str, Theme] = {
         bg_default="on #002B36",
         bg_node="on #073642",
         bg_subgraph="on #053440",
+        section_colors=("#0A3048", "#0A4820", "#380A38", "#483808", "#08403A", "#480A20", "#2A4008", "#100A48"),
     ),
 }
 
