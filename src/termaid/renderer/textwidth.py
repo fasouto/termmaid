@@ -33,7 +33,7 @@ import unicodedata
 # ---------------------------------------------------------------------------
 _CJK_WIDE_AMBIGUOUS: set[str] = set(
     # Geometric Shapes (U+25A0–25FF) used as border markers
-    "◇◆●○◯◉"
+    "◇◆●○◯"
     "▲△▼▽"
     "■□▪▫"
     # Miscellaneous Symbols used as markers
@@ -42,6 +42,11 @@ _CJK_WIDE_AMBIGUOUS: set[str] = set(
     # They are used as bar-chart fill characters and should remain
     # 1-column in the grid to preserve bar proportions.
 )
+
+# Characters that have EAW=N (Narrow) but render as 2 columns in CJK
+# terminals due to font choices.  Tracked separately because they are
+# NOT flagged by ``unicodedata.east_asian_width``.
+_CJK_WIDE_NARROW: set[str] = set("◉")
 
 # Module-level switch — set via ``set_cjk_mode()`` or auto-detected.
 _cjk_mode: bool = False
@@ -105,8 +110,11 @@ def char_width(ch: str) -> int:
     eaw = unicodedata.east_asian_width(ch)
     if eaw in ("W", "F"):
         return 2
-    if _cjk_mode and eaw == "A" and ch in _CJK_WIDE_AMBIGUOUS:
-        return 2
+    if _cjk_mode:
+        if eaw == "A" and ch in _CJK_WIDE_AMBIGUOUS:
+            return 2
+        if ch in _CJK_WIDE_NARROW:
+            return 2
     return 1
 
 

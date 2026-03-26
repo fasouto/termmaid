@@ -9,7 +9,7 @@ from typing import Protocol
 
 from ..canvas import Canvas
 from ..charset import CharSet
-from ..textwidth import display_width
+from ..textwidth import char_width, display_width
 from ...graph.shapes import NodeShape
 
 
@@ -128,9 +128,9 @@ def draw_diamond(
         │         │
         └────◆────┘
     """
-    cx = x + width // 2
     is_unicode = cs.horizontal == "─"
     marker = "◇" if is_unicode else "*"
+    cx = x + (width - char_width(marker)) // 2
 
     # Top border with ◆ at center
     canvas.put(y, x, cs.top_left, style=style)
@@ -192,9 +192,9 @@ def draw_circle(
         │         │
         ╰────◯────╯
     """
-    cx = x + width // 2
     is_unicode = cs.horizontal == "─"
     marker = "◯" if is_unicode else "O"
+    cx = x + (width - char_width(marker)) // 2
 
     # Draw as rounded box first
     draw_rounded(canvas, x, y, width, height, label, cs, style=style)
@@ -409,9 +409,10 @@ def draw_start_state(
     label: str, cs: CharSet, style: str = "",
 ) -> None:
     """Draw a start state: filled circle (●)."""
+    marker = "●" if cs.horizontal == "─" else "*"
     cy = y + height // 2
-    cx = x + width // 2
-    canvas.put(cy, cx, "●" if cs.horizontal == "─" else "*", style=style)
+    cx = x + (width - char_width(marker)) // 2
+    canvas.put(cy, cx, marker, style=style)
 
 
 def draw_end_state(
@@ -419,9 +420,10 @@ def draw_end_state(
     label: str, cs: CharSet, style: str = "",
 ) -> None:
     """Draw an end state: bullseye (◉)."""
+    marker = "◉" if cs.horizontal == "─" else "@"
     cy = y + height // 2
-    cx = x + width // 2
-    canvas.put(cy, cx, "◉" if cs.horizontal == "─" else "@", style=style)
+    cx = x + (width - char_width(marker)) // 2
+    canvas.put(cy, cx, marker, style=style)
 
 
 def draw_fork_join(
