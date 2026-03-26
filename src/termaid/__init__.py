@@ -119,6 +119,24 @@ def render(
             diagram = parse_mindmap(text)
             return render_mindmap(diagram, use_ascii=use_ascii, rounded=rounded_edges).to_string()
 
+        if text.startswith("timeline"):
+            from .parser.timeline import parse_timeline
+            from .renderer.timeline import render_timeline
+            diagram = parse_timeline(text)
+            return render_timeline(diagram, use_ascii=use_ascii).to_string()
+
+        if text.startswith("kanban"):
+            from .parser.kanban import parse_kanban
+            from .renderer.kanban import render_kanban
+            diagram = parse_kanban(text)
+            return render_kanban(diagram, use_ascii=use_ascii).to_string()
+
+        if text.startswith("quadrantChart"):
+            from .parser.quadrant import parse_quadrant
+            from .renderer.quadrant import render_quadrant
+            diagram = parse_quadrant(text)
+            return render_quadrant(diagram, use_ascii=use_ascii).to_string()
+
         graph = parse(text)
         from .output.text import render_text
         return render_text(graph, use_ascii=use_ascii, padding_x=padding_x, padding_y=padding_y, rounded_edges=rounded_edges, gap=gap)
@@ -217,6 +235,30 @@ def render_rich(
             from .output.rich import render_sequence_rich
             diagram = parse_mindmap(text)
             canvas = render_mindmap(diagram, use_ascii=use_ascii)
+            return render_sequence_rich(canvas, theme=theme)
+
+        if text.startswith("timeline"):
+            from .parser.timeline import parse_timeline
+            from .renderer.timeline import render_timeline
+            from .output.rich import render_sequence_rich
+            diagram = parse_timeline(text)
+            canvas = render_timeline(diagram, use_ascii=use_ascii)
+            return render_sequence_rich(canvas, theme=theme)
+
+        if text.startswith("kanban"):
+            from .parser.kanban import parse_kanban
+            from .renderer.kanban import render_kanban
+            from .output.rich import render_sequence_rich
+            diagram = parse_kanban(text)
+            canvas = render_kanban(diagram, use_ascii=use_ascii)
+            return render_sequence_rich(canvas, theme=theme)
+
+        if text.startswith("quadrantChart"):
+            from .parser.quadrant import parse_quadrant
+            from .renderer.quadrant import render_quadrant
+            from .output.rich import render_sequence_rich
+            diagram = parse_quadrant(text)
+            canvas = render_quadrant(diagram, use_ascii=use_ascii)
             return render_sequence_rich(canvas, theme=theme)
 
         graph = parse(text)
