@@ -518,6 +518,170 @@ class TestAsciiModeI18n:
 # display_width unit tests
 # =========================================================================
 
+# =========================================================================
+# Varied text lengths, mixed characters, odd/even special char counts
+# =========================================================================
+
+class TestVariedLabelLengths:
+    """Boxes must align regardless of label display width differences."""
+
+    def test_short_and_long_labels_td(self):
+        """Short (2 CJK = 4 cols) vs long (6 CJK = 12 cols) in same flow."""
+        output = render(
+            "graph TD\n"
+            "  A[가] --> B[데이터베이스]"
+        )
+        _assert_label_visible(output, "가")
+        _assert_label_visible(output, "데이터베이스")
+        _assert_boxes_aligned(output)
+
+    def test_single_char_labels(self):
+        output = render("graph LR\n  A[A] --> B[가]")
+        _assert_label_visible(output, "A")
+        _assert_label_visible(output, "가")
+        _assert_boxes_aligned(output)
+
+    def test_three_varying_widths_lr(self):
+        """Three nodes with display widths 2, 8, 12."""
+        output = render(
+            "graph LR\n"
+            "  A[가] --> B[API 서버] --> C[데이터베이스]"
+        )
+        _assert_boxes_aligned(output)
+
+    def test_three_varying_widths_td(self):
+        output = render(
+            "graph TD\n"
+            "  A[가] --> B[API 서버] --> C[데이터베이스]"
+        )
+        _assert_boxes_aligned(output)
+
+
+class TestMixedCharacterTypes:
+    """Labels with interleaved ASCII + CJK characters."""
+
+    def test_ascii_cjk_ascii(self):
+        output = render("graph LR\n  A[API서버v2]")
+        _assert_label_visible(output, "API서버v2")
+        _assert_boxes_aligned(output)
+
+    def test_cjk_ascii_cjk(self):
+        output = render("graph LR\n  A[서버API서버]")
+        _assert_label_visible(output, "서버API서버")
+        _assert_boxes_aligned(output)
+
+    def test_numbers_and_cjk(self):
+        output = render("graph LR\n  A[제품123호] --> B[버전4.0출시]")
+        _assert_label_visible(output, "제품123호")
+        _assert_label_visible(output, "버전4.0출시")
+        _assert_boxes_aligned(output)
+
+    def test_special_punctuation_and_cjk(self):
+        output = render('graph LR\n  A["사용자(관리자)"] --> B["서버[운영]"]')
+        _assert_label_visible(output, "사용자(관리자)")
+        _assert_label_visible(output, "서버[운영]")
+
+    def test_mixed_in_diamond(self):
+        """Diamond shape with mixed-width label."""
+        output = render(
+            "graph TD\n"
+            "  A[시작] --> B{유효한가?}\n"
+            "  B -->|예| C[완료]"
+        )
+        _assert_label_visible(output, "유효한가?")
+        _assert_boxes_aligned(output)
+
+    def test_mixed_in_sequence(self):
+        output = render(
+            "sequenceDiagram\n"
+            "    User->>API서버: POST /login\n"
+            "    API서버-->>User: 200 OK토큰발급"
+        )
+        _assert_label_visible(output, "API서버")
+        _assert_label_visible(output, "200 OK토큰발급")
+
+    def test_mixed_in_class(self):
+        output = render(
+            "classDiagram\n"
+            "    UserService <|-- AdminService\n"
+            "    UserService : +String 사용자명\n"
+            "    UserService : +login(비밀번호 str)"
+        )
+        _assert_label_visible(output, "사용자명")
+
+
+class TestOddEvenSpecialChars:
+    """Ensure alignment with odd and even counts of CJK characters."""
+
+    def test_one_cjk_char(self):
+        """1 CJK char (display width 2) — odd count."""
+        output = render("graph LR\n  A[가]")
+        _assert_label_visible(output, "가")
+        _assert_boxes_aligned(output)
+
+    def test_two_cjk_chars(self):
+        """2 CJK chars (display width 4) — even count."""
+        output = render("graph LR\n  A[가나]")
+        _assert_label_visible(output, "가나")
+        _assert_boxes_aligned(output)
+
+    def test_three_cjk_chars(self):
+        """3 CJK chars (display width 6) — odd count."""
+        output = render("graph LR\n  A[가나다]")
+        _assert_label_visible(output, "가나다")
+        _assert_boxes_aligned(output)
+
+    def test_odd_mixed(self):
+        """Odd total display width: 1 ASCII + 1 CJK = 3 cols."""
+        output = render("graph LR\n  A[A가]")
+        _assert_label_visible(output, "A가")
+        _assert_boxes_aligned(output)
+
+    def test_even_mixed(self):
+        """Even total display width: 2 ASCII + 1 CJK = 4 cols."""
+        output = render("graph LR\n  A[AB가]")
+        _assert_label_visible(output, "AB가")
+        _assert_boxes_aligned(output)
+
+    def test_odd_cjk_in_diamond(self):
+        """Diamond with odd CJK count."""
+        output = render("graph TD\n  A{가나다}")
+        _assert_label_visible(output, "가나다")
+        _assert_boxes_aligned(output)
+
+    def test_even_cjk_in_diamond(self):
+        """Diamond with even CJK count."""
+        output = render("graph TD\n  A{가나}")
+        _assert_label_visible(output, "가나")
+        _assert_boxes_aligned(output)
+
+    def test_pie_odd_even_labels(self):
+        """Pie chart with odd/even width labels must align bars."""
+        output = render(
+            "pie\n"
+            '    "가" : 40\n'
+            '    "가나" : 30\n'
+            '    "가나다" : 20\n'
+            '    "ABCD" : 10'
+        )
+        lines = [l for l in output.split("\n") if "┃" in l]
+        if lines:
+            positions = [display_width(l.split("┃")[0]) for l in lines]
+            assert len(set(positions)) == 1, (
+                f"Bar separators not aligned: positions={positions}"
+            )
+
+    def test_state_diagram_odd_cjk(self):
+        """State with odd CJK char label — check circle markers align."""
+        output = render(
+            "stateDiagram-v2\n"
+            "    [*] --> 가나다\n"
+            "    가나다 --> [*]"
+        )
+        _assert_label_visible(output, "가나다")
+        _assert_boxes_aligned(output)
+
+
 class TestDisplayWidth:
     """Unit tests for the textwidth module."""
 

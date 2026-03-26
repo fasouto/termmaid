@@ -167,6 +167,13 @@ class Canvas:
         # -- Wide-character bookkeeping (before placement) --
         existing = self._grid[row][col]
 
+        # Protected wide characters and their continuations must not be
+        # broken by edge routing or other overwrites.
+        if existing == _WIDE_CONT and self._protected[row][col]:
+            return
+        if self._protected[row][col] and char_width(existing) == 2:
+            return
+
         # If we are overwriting a continuation cell, break the parent wide char
         if existing == _WIDE_CONT and col > 0:
             self._grid[row][col - 1] = " "

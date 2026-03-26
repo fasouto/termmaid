@@ -17,8 +17,9 @@ def _get_version() -> str:
 
 
 def _max_line_width(text: str) -> int:
-    """Return the width of the longest line in text."""
-    return max((len(line) for line in text.split("\n")), default=0)
+    """Return the display width of the longest line in text."""
+    from .renderer.textwidth import display_width
+    return max((display_width(line) for line in text.split("\n")), default=0)
 
 
 def _auto_fit(
@@ -202,12 +203,33 @@ def main(argv: list[str] | None = None) -> int:
         help="Render sample diagrams. Use 'all' or a type name (flowchart, sequence, etc.).",
     )
     parser.add_argument(
+        "--cjk",
+        action="store_true",
+        default=None,
+        help="Treat ambiguous-width markers (◇●▲▼ etc.) as 2 columns. "
+             "Auto-detected from locale; use this flag to force it on.",
+    )
+    parser.add_argument(
+        "--no-cjk",
+        action="store_true",
+        default=False,
+        help="Disable CJK ambiguous-width mode even if auto-detected.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {_get_version()}",
     )
 
     args = parser.parse_args(argv)
+
+    # Apply CJK mode override before any rendering
+    from .renderer.textwidth import set_cjk_mode, _detect_cjk
+    if args.no_cjk:
+        set_cjk_mode(False)
+    elif args.cjk:
+        set_cjk_mode(True)
+    # else: keep auto-detected default
 
     if args.themes:
         return _list_themes()

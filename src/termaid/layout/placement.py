@@ -218,7 +218,7 @@ def _expand_gaps_for_edge_labels(graph: Graph, layout: GridLayout) -> None:
     for edge in graph.edges:
         if not edge.label:
             continue
-        label_len = len(edge.label)
+        label_len = display_width(edge.label)
 
         src_p = layout.placements.get(edge.source)
         tgt_p = layout.placements.get(edge.target)

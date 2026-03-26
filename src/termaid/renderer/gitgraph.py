@@ -56,7 +56,7 @@ def _sort_branches(diagram: GitGraph) -> list[str]:
 
 def _commit_footprint(c: Commit) -> int:
     """Return the half-width of the widest label (id or tag) for a commit."""
-    w = len(c.id)
+    w = display_width(c.id)
     if c.tag:
         w = max(w, display_width(c.tag) + 2)  # "[tag]"
     return (w + 1) // 2  # ceil half
@@ -258,7 +258,7 @@ def _draw_tb(
     for b in sorted_branches:
         max_label = max(max_label, display_width(b))
     for c in diagram.commits:
-        max_label = max(max_label, len(c.id))
+        max_label = max(max_label, display_width(c.id))
         if c.tag:
             max_label = max(max_label, display_width(c.tag) + 2)
 
