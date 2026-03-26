@@ -8,7 +8,7 @@ from __future__ import annotations
 from ..model.gitgraph import Commit, GitGraph
 from .canvas import Canvas
 from .charset import ASCII, UNICODE, CharSet
-from .textwidth import display_width
+from .textwidth import char_width, display_width
 
 # ── layout constants ──────────────────────────────────────────────
 _MIN_COMMIT_GAP = 6  # minimum horizontal gap between commit markers
@@ -219,16 +219,19 @@ def _draw_lr(
         col = commit_col[c.id]
         row = branch_row[c.branch]
         marker = _get_marker(c.type, use_ascii)
+        mw = char_width(marker)
 
         canvas.put(row, col, marker, merge=False, style="node")
 
+        # Center label under the marker's visual midpoint
         label = c.id
-        label_col = col - display_width(label) // 2
+        visual_center = col + mw // 2
+        label_col = visual_center - display_width(label) // 2
         canvas.put_text(row + 1, label_col, label, style="label")
 
         if c.tag:
             tag_text = f"[{c.tag}]"
-            tag_col = col - display_width(tag_text) // 2
+            tag_col = visual_center - display_width(tag_text) // 2
             canvas.put_text(row - 1, tag_col, tag_text, style="edge_label")
 
 
@@ -370,21 +373,23 @@ def _draw_tb(
         row = commit_row[c.id]
         col = branch_col[c.branch]
         marker = _get_marker(c.type, use_ascii)
+        mw = char_width(marker)
 
         canvas.put(row, col, marker, merge=False, style="node")
 
-        label_col = col - display_width(c.id) // 2
+        visual_center = col + mw // 2
+        label_col = visual_center - display_width(c.id) // 2
         if bottom_to_top:
             canvas.put_text(row - 1, label_col, c.id, style="label")
             if c.tag:
                 tag_text = f"[{c.tag}]"
-                tag_col = col - display_width(tag_text) // 2
+                tag_col = visual_center - display_width(tag_text) // 2
                 canvas.put_text(row + 1, tag_col, tag_text, style="edge_label")
         else:
             canvas.put_text(row + 1, label_col, c.id, style="label")
             if c.tag:
                 tag_text = f"[{c.tag}]"
-                tag_col = col - display_width(tag_text) // 2
+                tag_col = visual_center - display_width(tag_text) // 2
                 canvas.put_text(row - 1, tag_col, tag_text, style="edge_label")
 
 
