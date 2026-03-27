@@ -6,6 +6,7 @@ at their (x, y) positions using marker characters.
 from __future__ import annotations
 
 from ..model.quadrant import QuadrantChart
+from ..utils import display_width
 from .canvas import Canvas
 
 
@@ -71,9 +72,9 @@ def render_quadrant(
         # Place label to the right of the marker (with 1 char gap)
         label = " " + point.label
         start = px + 1
-        if start + len(label) > _CHART_W:
+        if start + display_width(label) > _CHART_W:
             # Doesn't fit on right, try left
-            start = px - len(label)
+            start = px - display_width(label)
         if start >= 0:
             for i, ch in enumerate(label):
                 if 0 <= start + i < _CHART_W:
@@ -138,7 +139,7 @@ def render_quadrant(
 
 def _place_label(grid: list[list[str]], label: str, cx: int, cy: int) -> None:
     """Place a label centered at (cx, cy) in the grid."""
-    start_x = cx - len(label) // 2
+    start_x = cx - display_width(label) // 2
     w = len(grid[0]) if grid else 0
     for i, ch in enumerate(label):
         x = start_x + i

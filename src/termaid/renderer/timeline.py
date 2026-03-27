@@ -6,6 +6,7 @@ a central vertical line.
 from __future__ import annotations
 
 from ..model.timeline import Timeline
+from ..utils import display_width
 from .canvas import Canvas
 from .charset import ASCII, UNICODE, CharSet
 
@@ -56,7 +57,7 @@ def render_timeline(
                 styled_lines.append((f" {v}", style))
 
     # Write to canvas
-    width = max((len(line) for line, _ in styled_lines), default=1) + 1
+    width = max((display_width(line) for line, _ in styled_lines), default=1) + 1
     height = len(styled_lines)
     canvas = Canvas(width, height)
     for r, (line, style) in enumerate(styled_lines):

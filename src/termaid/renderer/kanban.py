@@ -6,6 +6,7 @@ each column, using box-drawing characters for borders.
 from __future__ import annotations
 
 from ..model.kanban import Kanban
+from ..utils import display_width
 from .canvas import Canvas
 from .charset import ASCII, UNICODE, CharSet
 
@@ -33,7 +34,7 @@ def render_kanban(
     col_widths: list[int] = []
     for col in diagram.columns:
         title_w = len(col.title)
-        card_w = max((len(card.title) + (len(card.metadata) + 1 if card.metadata else 0)
+        card_w = max((display_width(card.title) + (display_width(card.metadata) + 1 if card.metadata else 0)
                       for card in col.cards), default=0)
         inner_w = max(title_w, card_w) + padding_x * 2
         col_widths.append(max(inner_w + 2, 10))  # +2 for card borders, min 10
@@ -94,9 +95,9 @@ def _draw_column(
 
     # Column title (centered, bold)
     title = col.title
-    if len(title) > w - 4:
+    if display_width(title) > w - 4:
         title = title[:w - 5] + "."
-    title_x = x + (w - len(title)) // 2
+    title_x = x + (w - display_width(title)) // 2
     canvas.put_text(y + 1, title_x, title, style=section_style)
 
     # Separator under title
@@ -130,7 +131,7 @@ def _draw_column(
         text = card.title
         if card.metadata:
             text += " " + card.metadata
-        if len(text) > cw - 2:
+        if display_width(text) > cw - 2:
             text = text[:cw - 3] + "."
         canvas.put_text(card_y + 1, cx + 1, text, style=card_style)
 
