@@ -10,7 +10,7 @@
 
 ## Features
 
-- **14 diagram types:** flowcharts, sequence, class, ER, state, block, git graphs, pie charts, treemaps, mindmaps, timelines, kanban boards, quadrant charts, and XY charts
+- **15 diagram types:** flowcharts, sequence, class, ER, state, block, git graphs, pie charts, treemaps, mindmaps, timelines, kanban boards, quadrant charts, XY charts, and user journeys
 - **Zero dependencies:** pure Python, nothing to install beyond the package itself
 - **Terminal-aware:** auto-fits diagrams to terminal width with progressive compaction
 - **Rich and Textual integration:** colored output and TUI widgets with optional extras

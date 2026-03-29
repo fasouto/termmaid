@@ -125,6 +125,12 @@ def render(
             diagram = parse_xychart(text)
             return render_xychart(diagram, use_ascii=use_ascii, rounded=rounded_edges).to_string()
 
+        if text.startswith("journey"):
+            from .parser.journey import parse_journey
+            from .renderer.journey import render_journey
+            diagram = parse_journey(text)
+            return render_journey(diagram, use_ascii=use_ascii, rounded=rounded_edges, **_extra).to_string()
+
         if text.startswith("timeline"):
             from .parser.timeline import parse_timeline
             from .renderer.timeline import render_timeline
@@ -249,6 +255,14 @@ def render_rich(
             from .output.rich import render_sequence_rich
             diagram = parse_xychart(text)
             canvas = render_xychart(diagram, use_ascii=use_ascii)
+            return render_sequence_rich(canvas, theme=theme)
+
+        if text.startswith("journey"):
+            from .parser.journey import parse_journey
+            from .renderer.journey import render_journey
+            from .output.rich import render_sequence_rich
+            diagram = parse_journey(text)
+            canvas = render_journey(diagram, use_ascii=use_ascii)
             return render_sequence_rich(canvas, theme=theme)
 
         if text.startswith("timeline"):
