@@ -18,6 +18,8 @@ def render_packet(
     diagram: Packet,
     *,
     use_ascii: bool = False,
+    rounded: bool = True,
+    padding_y: int = 1,
 ) -> Canvas:
     """Render a Packet model to a Canvas."""
     if not diagram.fields:
@@ -28,15 +30,15 @@ def render_packet(
 
     hz = "-" if use_ascii else "─"
     vt = "|" if use_ascii else "│"
-    tl = "+" if use_ascii else "┌"
-    tr = "+" if use_ascii else "┐"
-    bl = "+" if use_ascii else "└"
-    br = "+" if use_ascii else "┘"
-    tj = "+" if use_ascii else "┬"
-    bj = "+" if use_ascii else "┴"
-    lj = "+" if use_ascii else "├"
-    rj = "+" if use_ascii else "┤"
-    cross = "+" if use_ascii else "┼"
+    if use_ascii:
+        tl, tr, bl, br = "+", "+", "+", "+"
+        tj, bj, lj, rj, cross = "+", "+", "+", "+", "+"
+    elif rounded:
+        tl, tr, bl, br = "╭", "╮", "╰", "╯"
+        tj, bj, lj, rj, cross = "┬", "┴", "├", "┤", "┼"
+    else:
+        tl, tr, bl, br = "┌", "┐", "└", "┘"
+        tj, bj, lj, rj, cross = "┬", "┴", "├", "┤", "┼"
 
     margin = 1
 
@@ -59,17 +61,18 @@ def render_packet(
             remaining_label = ""
             bit += bits_in_this_row
 
-    # Each row: 3 lines (bit numbers, top border, content)
+    # Each row: 1 (numbers) + 1 (border) + padding_y (content) lines
     # Last row gets an extra bottom border
-    total_h = len(rows) * 3 + 1  # +1 for final bottom border
+    row_h = 2 + padding_y  # numbers + border + content lines
+    total_h = len(rows) * row_h + 1  # +1 for final bottom border
     total_w = margin + cols_per_row + 1
 
     canvas = Canvas(total_w + 4, total_h + 1)
 
     for ri, row_fields in enumerate(rows):
-        y_nums = ri * 3
-        y_border = ri * 3 + 1
-        y_content = ri * 3 + 2
+        y_nums = ri * row_h
+        y_border = ri * row_h + 1
+        y_content = ri * row_h + 1 + (padding_y + 1) // 2  # center content in padding
         row_start_bit = ri * row_bits
 
         # Bit numbers at field boundaries
@@ -103,20 +106,21 @@ def render_packet(
             else:
                 canvas.put(y_border, x, tj if is_first else cross, merge=False, style="node")
 
-        # Content row
-        canvas.put(y_content, margin, vt, merge=False, style="node")
-        canvas.put(y_content, margin + cols_per_row, vt, merge=False, style="node")
+        # Content rows (with padding)
+        for py in range(padding_y):
+            yr = y_border + 1 + py
+            canvas.put(yr, margin, vt, merge=False, style="node")
+            canvas.put(yr, margin + cols_per_row, vt, merge=False, style="node")
+            for cs, ce, _ in row_fields:
+                if cs > 0:
+                    canvas.put(yr, margin + cs * _BITS_PER_COL, vt, merge=False, style="node")
 
+        # Labels centered vertically and horizontally
         for cs, ce, label in row_fields:
             x_start = margin + cs * _BITS_PER_COL
             x_end = margin + (ce + 1) * _BITS_PER_COL
             field_w = x_end - x_start
 
-            # Field separator
-            if cs > 0:
-                canvas.put(y_content, x_start, vt, merge=False, style="node")
-
-            # Center label
             if label:
                 avail = field_w - 2
                 disp_label = label
@@ -126,7 +130,7 @@ def render_packet(
                 canvas.put_text(y_content, lx, disp_label, style="label")
 
     # Bottom border
-    y_bottom = len(rows) * 3
+    y_bottom = len(rows) * row_h
     for c in range(cols_per_row):
         canvas.put(y_bottom, margin + c, hz, merge=False, style="node")
     canvas.put(y_bottom, margin, bl, merge=False, style="node")
