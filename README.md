@@ -432,6 +432,63 @@ xychart-beta
 
 **Features:** bar charts, line charts, bar+line combos, horizontal orientation (`xychart horizontal`), axis labels, `xychart` and `xychart-beta` keywords, rounded/sharp line corners, JSON ingest
 
+### User Journeys
+
+```mermaid
+journey
+    title My working day
+    section Go to work
+        Make tea: 5: Me
+        Go upstairs: 3: Me
+        Do work: 1: Me, Cat
+    section Go home
+        Go downstairs: 5: Me
+        Sit down: 5: Me
+```
+
+```
+  My working day
+
+  ● Cat
+  ◆ Me
+
+  ╭───────────── Go to work ──────────────╮   ╭───────── Go home ───────────╮
+
+  ╭◆─────────╮ ╭◆────────────╮ ╭●◆───────╮    ╭◆──────────────╮ ╭◆─────────╮
+ ─│ Make tea │─│ Go upstairs │─│ Do work │────│ Go downstairs │─│ Sit down │────►
+  ╰──────────╯ ╰─────────────╯ ╰─────────╯    ╰───────────────╯ ╰──────────╯
+       😄            😐            😞                😄              😄
+```
+
+**Features:** sections, satisfaction scores (😞-😄), multi-actor support with distinct symbols (●◆■▲), rounded/sharp/ASCII corners
+
+### Packet Diagrams
+
+```mermaid
+packet
+    0-15: "Source Port"
+    16-31: "Destination Port"
+    32-63: "Sequence Number"
+    64-95: "Acknowledgment Number"
+```
+
+```
+ 0                                             15 16                                           31
+ ╭───────────────────────────────────────────────┬───────────────────────────────────────────────╮
+ │                 Source Port                   │               Destination Port                │
+ ╰───────────────────────────────────────────────┴───────────────────────────────────────────────╯
+ 32                                                                                            63
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │                                       Sequence Number                                         │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+ 64                                                                                            95
+ ╭───────────────────────────────────────────────────────────────────────────────────────────────╮
+ │                                    Acknowledgment Number                                      │
+ ╰───────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+**Features:** bit-aligned field layouts, boundary numbers, auto-increment (`+N`) syntax, separated boxes per row, truncated label legend with bit ranges, `packet` and `packet-beta` keywords
+
 ## CLI options
 
 | Flag | Description |
