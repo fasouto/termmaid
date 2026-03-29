@@ -166,19 +166,23 @@ def render_packet(
                 canvas.put(y_bottom, x, bj, merge=False, style="node")
 
     # Legend for truncated labels
-    truncated: list[tuple[str, str]] = []
+    truncated: list[tuple[str, str, int, int]] = []
     for field in diagram.fields:
         avail = field.bits * _BITS_PER_COL - 2
         if avail < display_width(field.label) and field.label:
             short = field.label[:max(1, avail - 1)] + "."
-            truncated.append((short, field.label))
+            truncated.append((short, field.label, field.start, field.end))
 
     if truncated:
         y_legend = y_bottom + 2
         needed_h = y_legend + len(truncated) + 1
         if needed_h > canvas.height:
             canvas.resize(canvas.width, needed_h)
-        for i, (short, full) in enumerate(truncated):
-            canvas.put_text(y_legend + i, margin, f"{short} = {full}", style="edge_label")
+        for i, (short, full, start, end) in enumerate(truncated):
+            if start == end:
+                bits = f"[{start}]"
+            else:
+                bits = f"[{start}-{end}]"
+            canvas.put_text(y_legend + i, margin, f"{short} = {full} {bits}", style="edge_label")
 
     return canvas
