@@ -11,7 +11,7 @@ from ..utils import display_width
 from .canvas import Canvas
 
 
-_BITS_PER_COL = 2  # character columns per bit
+_BITS_PER_COL = 3  # character columns per bit
 
 
 def render_packet(
@@ -75,21 +75,28 @@ def render_packet(
         y_content = ri * row_h + 1 + (padding_y + 1) // 2  # center content in padding
         row_start_bit = ri * row_bits
 
-        # Bit numbers at field boundaries
-        for cs, ce, _ in row_fields:
-            # Start bit
-            bit_num = row_start_bit + cs
-            label = str(bit_num)
-            x = margin + cs * _BITS_PER_COL
-            canvas.put_text(y_nums, x, label, style="edge_label")
+        # Bit numbers at field boundaries (start and end of each field)
+        placed_nums: set[int] = set()  # x positions already used
+        for fi, (cs, ce, _) in enumerate(row_fields):
+            # Start bit (left-aligned)
+            start_bit = row_start_bit + cs
+            start_label = str(start_bit)
+            sx = margin + cs * _BITS_PER_COL
+            if not any(p in placed_nums for p in range(sx, sx + display_width(start_label) + 1)):
+                canvas.put_text(y_nums, sx, start_label, style="edge_label")
+                for px in range(sx, sx + display_width(start_label) + 1):  # +1 for gap
+                    placed_nums.add(px)
 
-        # End bit of last field (right-aligned)
-        if row_fields:
-            last_ce = row_fields[-1][1]
-            bit_num = row_start_bit + last_ce
-            label = str(bit_num)
-            x = margin + (last_ce + 1) * _BITS_PER_COL - display_width(label)
-            canvas.put_text(y_nums, max(0, x), label, style="edge_label")
+            # End bit (right-aligned at field end)
+            end_bit = row_start_bit + ce
+            if end_bit != start_bit:  # skip if same as start (single bit)
+                end_label = str(end_bit)
+                ex = margin + (ce + 1) * _BITS_PER_COL - display_width(end_label)
+                # Only show if it doesn't overlap (with 1-char gap)
+                if not any(p in placed_nums for p in range(ex - 1, ex + display_width(end_label))):
+                    canvas.put_text(y_nums, max(0, ex), end_label, style="edge_label")
+                    for px in range(ex, ex + display_width(end_label) + 1):
+                        placed_nums.add(px)
 
         # Top border
         for c in range(cols_per_row):

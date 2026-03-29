@@ -123,7 +123,10 @@ def render(
             from .parser.packet import parse_packet
             from .renderer.packet import render_packet
             diagram = parse_packet(text)
-            return render_packet(diagram, use_ascii=use_ascii, rounded=rounded_edges, padding_y=padding_y).to_string()
+            _pkt_extra: dict[str, int] = {}
+            if padding_y != 2:
+                _pkt_extra["padding_y"] = padding_y
+            return render_packet(diagram, use_ascii=use_ascii, rounded=rounded_edges, **_pkt_extra).to_string()
 
         if text.startswith("xychart"):
             from .parser.xychart import parse_xychart
