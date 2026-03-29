@@ -75,13 +75,21 @@ def render_packet(
         y_content = ri * row_h + 1 + (padding_y + 1) // 2  # center content in padding
         row_start_bit = ri * row_bits
 
-        # Field separators extended into the number row
+        # Field separators extended into the number row:
+        # Current row's separators AND previous row's separators (for continuity)
         separator_xs: set[int] = set()
         for fi, (cs, ce, _) in enumerate(row_fields):
             if cs > 0:
                 sep_x = margin + cs * _BITS_PER_COL
                 canvas.put(y_nums, sep_x, vt, merge=False, style="node")
                 separator_xs.add(sep_x)
+        # Also extend previous row's separators down into this number row
+        if ri > 0:
+            for fi, (cs, ce, _) in enumerate(rows[ri - 1]):
+                if cs > 0:
+                    sep_x = margin + cs * _BITS_PER_COL
+                    canvas.put(y_nums, sep_x, vt, merge=False, style="node")
+                    separator_xs.add(sep_x)
 
         # Right edge │ on number row
         if ri > 0:
