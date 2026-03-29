@@ -2,7 +2,8 @@
 
 Renders network packet field layouts as a grid of bit-aligned boxes,
 with bit numbers at field boundaries. Fields wrap to new rows every
-row_bits (default 32) bits.
+row_bits (default 32) bits. Each row is a self-contained strip with
+its own top/bottom borders.
 """
 from __future__ import annotations
 
@@ -32,13 +33,13 @@ def render_packet(
     vt = "|" if use_ascii else "│"
     if use_ascii:
         tl, tr, bl, br = "+", "+", "+", "+"
-        tj, bj, lj, rj, cross = "+", "+", "+", "+", "+"
+        tj, bj = "+", "+"
     elif rounded:
         tl, tr, bl, br = "╭", "╮", "╰", "╯"
-        tj, bj, lj, rj, cross = "┬", "┴", "├", "┤", "┼"
+        tj, bj = "┬", "┴"
     else:
         tl, tr, bl, br = "┌", "┐", "└", "┘"
-        tj, bj, lj, rj, cross = "┬", "┴", "├", "┤", "┼"
+        tj, bj = "┬", "┴"
 
     margin = 1
 
@@ -61,31 +62,28 @@ def render_packet(
             remaining_label = ""
             bit += bits_in_this_row
 
-    # Remove trailing rows that have no labels (empty continuations)
+    # Remove trailing rows that have no labels
     while rows and all(not label for _, _, label in rows[-1]):
         rows.pop()
 
-    # Each row: 1 (numbers) + 1 (border) + padding_y (content) lines
-    # Last row gets an extra bottom border
-    row_h = 2 + padding_y  # numbers + border + content lines
-    total_h = len(rows) * row_h + 1  # +1 for final bottom border
+    # Each row: 1 (numbers) + 1 (top border) + padding_y (content) + 1 (bottom border)
+    row_h = 3 + padding_y
+    total_h = len(rows) * row_h
     total_w = margin + cols_per_row + 1
 
-    canvas = Canvas(total_w + 4, total_h + 1)
+    canvas = Canvas(total_w + 4, total_h + 10)  # extra for legend
 
     for ri, row_fields in enumerate(rows):
         y_nums = ri * row_h
-        y_border = ri * row_h + 1
-        y_content = ri * row_h + 1 + (padding_y + 1) // 2  # center content in padding
+        y_top = ri * row_h + 1
+        y_bottom = ri * row_h + 2 + padding_y
+        y_content = y_top + (padding_y + 1) // 2
         row_start_bit = ri * row_bits
 
-        # No separators in number rows (clean like Mermaid)
-        separator_xs: set[int] = set()
+        # --- Bit numbers ---
+        placed_nums: set[int] = set()
 
-        # Bit numbers at field boundaries, avoiding separator positions
-        placed_nums: set[int] = set(separator_xs)
-
-        # Pass 1: end labels (right-aligned, before separator)
+        # End labels first (right-aligned)
         for fi, (cs, ce, _) in enumerate(row_fields):
             end_bit = row_start_bit + ce
             start_bit = row_start_bit + cs
@@ -93,51 +91,46 @@ def render_packet(
                 continue
             end_label = str(end_bit)
             ex = margin + (ce + 1) * _BITS_PER_COL - display_width(end_label)
-            # Shift left if overlapping a separator
             while any(p in placed_nums for p in range(ex, ex + display_width(end_label))):
                 ex -= 1
             if ex >= margin:
                 canvas.put_text(y_nums, ex, end_label, style="edge_label")
-                for px in range(ex, ex + display_width(end_label) + 1):  # +1 reserves gap after
+                for px in range(ex, ex + display_width(end_label) + 1):
                     placed_nums.add(px)
 
-        # Pass 2: start labels. Non-first fields offset +1 for spacing after end labels.
+        # Start labels (offset +1 for non-first fields)
         for fi, (cs, ce, _) in enumerate(row_fields):
             start_bit = row_start_bit + cs
             start_label = str(start_bit)
             sx = margin + cs * _BITS_PER_COL
             if fi > 0:
-                sx += 1  # 1 char gap after previous field's end label
+                sx += 1
             if not any(p in placed_nums for p in range(sx, sx + display_width(start_label))):
                 canvas.put_text(y_nums, sx, start_label, style="edge_label")
                 for px in range(sx, sx + display_width(start_label)):
                     placed_nums.add(px)
 
-        # Top border
-        for c in range(cols_per_row):
-            canvas.put(y_border, margin + c, hz, merge=False, style="node")
-        # Right edge
-        is_first = ri == 0
-        canvas.put(y_border, margin + cols_per_row, tr if is_first else rj, merge=False, style="node")
+        # --- Top border ---
+        canvas.put(y_top, margin, tl, merge=False, style="node")
+        for c in range(1, cols_per_row):
+            canvas.put(y_top, margin + c, hz, merge=False, style="node")
+        canvas.put(y_top, margin + cols_per_row, tr, merge=False, style="node")
 
-        # Field separators on border
-        for fi, (cs, ce, _) in enumerate(row_fields):
-            x = margin + cs * _BITS_PER_COL
-            if cs == 0:
-                canvas.put(y_border, x, tl if is_first else lj, merge=False, style="node")
-            else:
-                canvas.put(y_border, x, tj if is_first else cross, merge=False, style="node")
+        # Field separators on top border
+        for cs, ce, _ in row_fields:
+            if cs > 0:
+                canvas.put(y_top, margin + cs * _BITS_PER_COL, tj, merge=False, style="node")
 
-        # Content rows (with padding)
+        # --- Content rows ---
         for py in range(padding_y):
-            yr = y_border + 1 + py
+            yr = y_top + 1 + py
             canvas.put(yr, margin, vt, merge=False, style="node")
             canvas.put(yr, margin + cols_per_row, vt, merge=False, style="node")
             for cs, ce, _ in row_fields:
                 if cs > 0:
                     canvas.put(yr, margin + cs * _BITS_PER_COL, vt, merge=False, style="node")
 
-        # Labels centered vertically and horizontally
+        # Labels centered
         for cs, ce, label in row_fields:
             x_start = margin + cs * _BITS_PER_COL
             x_end = margin + (ce + 1) * _BITS_PER_COL
@@ -151,19 +144,16 @@ def render_packet(
                 lx = x_start + 1 + (avail - display_width(disp_label)) // 2
                 canvas.put_text(y_content, lx, disp_label, style="label")
 
-    # Bottom border
-    y_bottom = len(rows) * row_h
-    for c in range(cols_per_row):
-        canvas.put(y_bottom, margin + c, hz, merge=False, style="node")
-    canvas.put(y_bottom, margin, bl, merge=False, style="node")
-    canvas.put(y_bottom, margin + cols_per_row, br, merge=False, style="node")
+        # --- Bottom border ---
+        canvas.put(y_bottom, margin, bl, merge=False, style="node")
+        for c in range(1, cols_per_row):
+            canvas.put(y_bottom, margin + c, hz, merge=False, style="node")
+        canvas.put(y_bottom, margin + cols_per_row, br, merge=False, style="node")
 
-    # Bottom border field separators
-    if rows:
-        for cs, ce, _ in rows[-1]:
+        # Field separators on bottom border
+        for cs, ce, _ in row_fields:
             if cs > 0:
-                x = margin + cs * _BITS_PER_COL
-                canvas.put(y_bottom, x, bj, merge=False, style="node")
+                canvas.put(y_bottom, margin + cs * _BITS_PER_COL, bj, merge=False, style="node")
 
     # Legend for truncated labels
     truncated: list[tuple[str, str, int, int]] = []
@@ -174,7 +164,7 @@ def render_packet(
             truncated.append((short, field.label, field.start, field.end))
 
     if truncated:
-        y_legend = y_bottom + 2
+        y_legend = total_h + 1
         needed_h = y_legend + len(truncated) + 1
         if needed_h > canvas.height:
             canvas.resize(canvas.width, needed_h)
