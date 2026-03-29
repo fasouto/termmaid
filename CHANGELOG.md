@@ -5,7 +5,8 @@
 ### New diagram types
 - **XY Chart** (`xychart-beta` / `xychart` syntax): bar charts, line charts, and bar+line combos with labeled axes, horizontal orientation support, rounded/sharp line corners, half-block bar tops, and JSON ingest
 - **User Journey** (`journey` syntax): horizontal task timeline with sections, satisfaction emoji scores (😞-😄), multi-actor support with distinct symbols (●◆■▲), rounded/sharp/ASCII corners, CJK support
-- 15 diagram types now supported
+- **Packet diagram** (`packet-beta` syntax): network packet field layouts as bit-aligned grids with ruler, field labels, auto-increment (`+N`) syntax, and multi-row wrapping
+- 16 diagram types now supported
 
 ### Improvements
 - CJK/wide character display width fix (merged from community PR)

@@ -119,6 +119,12 @@ def render(
             diagram = parse_mindmap(text)
             return render_mindmap(diagram, use_ascii=use_ascii, rounded=rounded_edges).to_string()
 
+        if text.startswith("packet"):
+            from .parser.packet import parse_packet
+            from .renderer.packet import render_packet
+            diagram = parse_packet(text)
+            return render_packet(diagram, use_ascii=use_ascii).to_string()
+
         if text.startswith("xychart"):
             from .parser.xychart import parse_xychart
             from .renderer.xychart import render_xychart
@@ -247,6 +253,14 @@ def render_rich(
             from .output.rich import render_sequence_rich
             diagram = parse_mindmap(text)
             canvas = render_mindmap(diagram, use_ascii=use_ascii)
+            return render_sequence_rich(canvas, theme=theme)
+
+        if text.startswith("packet"):
+            from .parser.packet import parse_packet
+            from .renderer.packet import render_packet
+            from .output.rich import render_sequence_rich
+            diagram = parse_packet(text)
+            canvas = render_packet(diagram, use_ascii=use_ascii)
             return render_sequence_rich(canvas, theme=theme)
 
         if text.startswith("xychart"):
