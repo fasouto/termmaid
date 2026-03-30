@@ -3,7 +3,7 @@
 <p align="center">Render Mermaid diagrams in your terminal or Python app.</p>
 
 <p align="center">
-  <img src="demo/termaid-demo.gif" alt="termaid demo" width="800">
+  <img src="termaid-demo.gif" alt="termaid demo" width="800">
 </p>
 
 **[Try it online at termaid.com](https://termaid.com)**
