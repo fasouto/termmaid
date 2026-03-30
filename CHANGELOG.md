@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 (2026-03-30)
+
+### Fixes
+- Fix emoji display width: characters like 🗄 and 🖥 now correctly treated as 2 columns wide, fixing box alignment in architecture diagrams and any label containing emoji
+
 ## 0.6.0 (2026-03-30)
 
 ### New diagram types
