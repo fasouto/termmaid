@@ -10,7 +10,7 @@ from .canvas import Canvas
 from .charset import ASCII, UNICODE, CharSet
 from ..utils import display_width
 
-_FILL_CHARS = ["█", "▓", "░", "▒", "▞", "▚", "▖", "▗"]
+_FILL_CHARS = ["█", "░", "▒", "▚", "▞", "▄", "▀", "▌"]
 _FILL_CHARS_ASCII = ["#", "*", "+", "~", ":", ".", "o", "="]
 
 _BAR_WIDTH = 40

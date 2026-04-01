@@ -169,7 +169,7 @@ class TestPieChartRendering:
             '    "Second" : 50'
         )
         assert "█" in output
-        assert "▓" in output
+        assert "░" in output
 
     def test_bar_separator_char(self):
         output = render(
